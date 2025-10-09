@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from ..models.user import User
@@ -31,14 +31,20 @@ class Token(BaseModel):
     token_type: str
 
 
-@router.post("/signup", response_model=dict)
+@router.post("/signup")
 def signup(user: UserCreate, db: Session = Depends(get_db)):
     if user.password1 != user.password2:
-        raise HTTPException(status_code=400, detail="Passwords do not match")
-    # Check if email exists
+        raise HTTPException(
+            status_code=400,
+            detail="Error de validación (email duplicado, contraseñas no coinciden).",
+        )
+    # Verificar si el email ya existe
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(
+            status_code=400,
+            detail="Error de validación (email duplicado, contraseñas no coinciden).",
+        )
     hashed_password = get_password_hash(user.password1)
     new_user = User(
         id=str(uuid.uuid4()),
@@ -52,16 +58,22 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    return {"message": "User created successfully"}
+    return Response(
+        status_code=201, content={"message": "Usuario creado exitosamente."}
+    )
 
 
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=dict)
 def login(user: UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.email).first()
     if not db_user or not verify_password(user.password, db_user.password_hash):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        raise HTTPException(status_code=401, detail="Credenciales inválidas.")
     access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     access_token = create_access_token(
         data={"sub": db_user.email}, expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token,
+        "token_type": "Bearer",
+        "expires_in": int(access_token_expires.total_seconds()),
+    }

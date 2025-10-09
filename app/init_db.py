@@ -8,4 +8,4 @@ def init_db():
 
 if __name__ == "__main__":
     init_db()
-    print("Database tables created.")
+    print("Tablas de la base de datos creadas.")
