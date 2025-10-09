@@ -1,65 +1,150 @@
 # ANB Rising Stars Showcase
 
-Este proyecto es una aplicación web construida con FastAPI para gestionar un showcase de estrellas emergentes.
+Este proyecto es una aplicación web escalable para la gestión de archivos y procesamiento asíncrono de tareas, orientada al showcase de estrellas emergentes de la ANB (Asociación Nacional de Baloncesto). Construida con FastAPI, PostgreSQL, Docker y más tecnologías para garantizar escalabilidad, seguridad y portabilidad.
 
 ## Integrantes del Equipo
 
-- Nombre: [Tu Nombre Completo]
-- Correo Uniandes: [tu_correo@uniandes.edu.co]
+- Nombre: Leonel Alexander Parrales Machuca
+- Correo Uniandes: l.parrales@uniandes.edu.co
+- Nombre: [Nombre Completo Integrante 2]
+- Correo Uniandes: [correo2@uniandes.edu.co]
+- Nombre: [Nombre Completo Integrante 3]
+- Correo Uniandes: [correo3@uniandes.edu.co]
+- Nombre: [Nombre Completo Integrante 4]
+- Correo Uniandes: [correo4@uniandes.edu.co]
 
-## Configuración de la Base de Datos PostgreSQL
+## Descripción del Proyecto
 
-La base de datos PostgreSQL está configurada para ejecutarse en un contenedor Docker.
+La plataforma permite a jugadores aficionados registrarse, subir videos de habilidades, procesarlos de manera asíncrona (recorte, ajuste de formato, marca de agua), y recibir votaciones públicas para generar rankings. Incluye autenticación JWT, gestión de archivos, y orquestación con Docker.
 
-### Requisitos Previos
+### Tecnologías Principales
 
-- Docker y Docker Compose instalados en tu sistema.
+- **Backend**: FastAPI (Python)
+- **Base de Datos**: PostgreSQL
+- **Autenticación**: JWT
+- **Procesamiento Asíncrono**: Celery + RabbitMQ
+- **Proxy Reverso**: NGINX
+- **Contenedorización**: Docker + Docker Compose
+- **Almacenamiento**: Sistema de archivos local (preparado para S3)
 
-### Configuración
+## Requisitos Previos
 
-1. Copia el archivo `.env.example` a `.env`:
+- Docker y Docker Compose instalados.
+- Git para clonar el repositorio.
+- Postman / Newman para pruebas de API.
 
-   ```bash
-   cp .env.example .env
-   ```
+## Instalación y Ejecución
 
-2. Edita el archivo `.env` con tus credenciales deseadas (por defecto: anb_db, anb_user, anb_password, y una SECRET_KEY segura).
+### 1. Clonar el Repositorio
 
-### Ejecutar la Aplicación Completa
+```bash
+git clone https://github.com/leonelparrales22/ANB-Rising-Stars-Showcase.git
+cd ANB-Rising-Stars-Showcase
+```
 
-1. Navega al directorio `docker/`:
+### 2. Configurar Variables de Entorno
 
-   ```bash
-   cd docker/
-   ```
+Copia el archivo de ejemplo y edítalo:
 
-2. Ejecuta Docker Compose para iniciar todos los servicios (PostgreSQL, FastAPI API, NGINX):
+```bash
+cp .env.example .env
+```
 
-   ```bash
-   docker-compose up --build
-   ```
+Edita `.env` con tus valores (ej. credenciales de DB, SECRET_KEY).
 
-   Esto construirá la imagen de la API, creará las tablas en la base de datos, y expondrá la aplicación en `http://localhost:8080`.
+### 3. Ejecutar la Aplicación
 
-### Detener la Aplicación
+Navega al directorio `docker/` y ejecuta:
 
-Para detener los contenedores:
+```bash
+cd docker/
+docker-compose up --build
+```
+
+Esto iniciará:
+
+- PostgreSQL en puerto 5432.
+- FastAPI API en puerto 8000 (interno).
+- NGINX proxy en puerto 8080 (accede vía `http://localhost:8080`).
+
+La API estará disponible en `http://localhost:8080/api/...`.
+
+### 4. Detener la Aplicación
 
 ```bash
 docker-compose down
 ```
 
-### Endpoints Disponibles
+Para limpiar volúmenes (datos de DB):
 
-- **POST /api/auth/signup**: Registro de nuevos usuarios.
-- **POST /api/auth/login**: Autenticación y obtención de token JWT.
+```bash
+docker-compose down -v
+```
 
-La API estará disponible en `http://localhost:8080/api/auth/...`.
+## Endpoints Disponibles (Entrega 1)
 
-### Notas
+- **POST /api/auth/signup**: Registro de nuevos jugadores (201 on success).
+- **POST /api/auth/login**: Autenticación y obtención de token JWT (200 on success).
+- **POST /api/videos/upload**: Subir video (requiere auth, inicia procesamiento asíncrono).
+- **GET /api/videos**: Lista videos del usuario autenticado.
+- **GET /api/videos/{video_id}**: Detalle de un video específico.
+- **DELETE /api/videos/{video_id}**: Eliminar video propio (si permitido).
+- **GET /api/public/videos**: Lista videos públicos para votación.
+- **POST /api/public/videos/{video_id}/vote**: Votar por un video (requiere auth).
+- **GET /api/public/rankings**: Ranking de jugadores por votos.
 
-- Las tablas de la base de datos se crean automáticamente al iniciar el contenedor de la API.
-- NGINX actúa como proxy reverso en el puerto 8080, redirigiendo a la API en el puerto 8000.
-- Los datos de la base se persisten en un volumen Docker llamado `postgres_data`.
-- No se han creado tablas adicionales aún; esto se hará en pasos posteriores con migraciones (probablemente usando Alembic).
-- Asegúrate de que los puertos 5432, 8000 y 8080 estén disponibles en tu máquina.
+Documentación completa en OpenAPI: `http://localhost:8080/docs` (cuando esté corriendo).
+
+## Pruebas
+
+### Con Postman
+
+1. Importa la colección: `collections/postman_collection.json`.
+2. Selecciona el entorno: `collections/postman_environment.json`.
+3. Ejecuta los requests en orden (signup → login para token → otros).
+
+### Con Newman (CLI)
+
+```bash
+npm install -g newman
+newman run collections/postman_collection.json -e collections/postman_environment.json
+```
+
+## Documentación
+
+Toda la documentación se encuentra en `docs/Entrega_1/`:
+
+- [Arquitectura de Software](docs/Entrega_1/arquitectura-software.md)
+- [Guía de Despliegue](docs/Entrega_1/guia-despliegue.md)
+- [Modelo de Datos (ERD)](docs/Entrega_1/modelo-datos.md)
+- [Diagramas C4](docs/Entrega_1/diagramas/)
+- [Decisiones Arquitectónicas (ADR)](docs/Entrega_1/decisiones-adr.md)
+
+## Sustentación
+
+Video de sustentación: [Enlace al video](sustentacion/Entrega_1/video_sustentacion.md)
+
+## Plan de Pruebas de Capacidad
+
+Ver [capacity-planning/plan_de_pruebas.md](capacity-planning/plan_de_pruebas.md)
+
+## Releases
+
+- **v1.0.0**: Primera entrega con auth endpoints y Docker setup. [Ver release](https://github.com/leonelparrales22/ANB-Rising-Stars-Showcase/releases/tag/v1.0.0)
+
+## Notas Adicionales
+
+- Las tablas se crean automáticamente al iniciar la API.
+- Volumen Docker `anb_postgres_data` persiste datos de DB.
+- Para desarrollo local, usa `docker-compose up` sin `--build` después del primer build.
+- Asegúrate de que los puertos 5432, 8000, 8080 estén libres.
+- Futuras entregas incluirán procesamiento asíncrono completo, votación, rankings, y despliegue en nube.
+
+## Contribución
+
+1. Crea una rama feature desde `main`.
+2. Implementa cambios.
+3. Ejecuta pruebas y valida con Postman.
+4. Crea PR con descripción detallada de la rama feature a  `develop`.
+5. Crea PR con descripción detallada de la rama `develop` a `main`.
+
