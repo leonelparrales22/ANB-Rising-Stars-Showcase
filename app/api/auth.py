@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response
+from starlette.responses import JSONResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from ..models.user import User
@@ -58,7 +59,7 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    return Response(
+    return JSONResponse(
         status_code=201, content={"message": "Usuario creado exitosamente."}
     )
 

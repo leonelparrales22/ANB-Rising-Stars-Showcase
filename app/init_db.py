@@ -3,7 +3,11 @@ from .models.user import User
 
 
 def init_db():
+    print("Creando tablas...")
+    print(f"Base: {Base}")
+    print(f"User: {User}")
     Base.metadata.create_all(bind=engine)
+    print("Tablas creadas.")
 
 
 if __name__ == "__main__":
