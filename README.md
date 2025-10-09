@@ -55,6 +55,35 @@
 - Sistema: Plataforma ANB Rising Stars Showcase.
 - Integraciones: Email (para registro), almacenamiento de archivos, sistema de procesamiento de videos.
 
+```mermaid
+graph TB
+    subgraph "ANB Rising Stars Showcase"
+        A[Plataforma ANB Rising Stars]
+    end
+    
+    subgraph "Personas"
+        B[Jugadores Aficionados]
+        C[Público General]
+        D[Jurado Especializado]
+        E[Administradores ANB]
+    end
+    
+    subgraph "Sistemas Externos"
+        G[Local Storage / Servicio de Almacenamiento Cloud]
+        H[Servicio de Procesamiento Video]
+        I[CDN para Distribución]
+    end
+    
+    B -- "Registra, sube videos,<br>consulta estado" --> A
+    C -- "Ve videos, vota,<br>consulta ranking" --> A
+    D -- "Evalúa, vota,<br>selecciona talentos" --> A
+    E -- "Administra, monitorea,<br>genera reportes" --> A
+    
+    A -- "Almacena archivos,<br>backups" --> G
+    A -- "Procesamiento avanzado<br>de video" --> H
+    A -- "Distribución global<br>de videos" --> I```
+
+
 ### Diagrama de Contenedores (C4 - Nivel 2)
 
 **Componentes principales:**
@@ -69,6 +98,49 @@
 - **SonarQube:** Análisis de calidad del código.
 - **Postman/Newman:** Pruebas de API automatizadas.
 
+
+```mermaid
+graph TB
+    subgraph "ANB Platform - Container Architecture"
+        subgraph "Web Layer"
+            A[NGINX<br>Reverse Proxy<br>Load Balancer]
+        end
+        
+        subgraph "Application Layer"
+            B[FastAPI<br>REST API Server<br>Python 3.11]
+            C[Celery Worker<br>Video Processing<br>Python 3.11]
+        end
+        
+        subgraph "Data Layer"
+            D[PostgreSQL<br>Main Database<br>v13]
+            E[Redis<br>Cache<br>v7]
+        end
+        
+        subgraph "Message Broker"
+            F[RabbitMQ<br>Message Broker<br>v3.12]
+        end
+        
+        subgraph "Storage Layer"
+            G[Local File System<br>Video Storage<br>Ext4 / AWS S3]
+        end
+        
+    end
+    
+    J[Web Browser<br>Usuario Final] --> A
+    
+    A --> B
+    B --> D
+    B --> E
+    B --> F
+    B --> G
+    
+    F --> C
+    C --> D
+    C --> G
+    C --> E
+    ```
+
+
 ### Diagrama de Componentes (C4 - Nivel 3)
 
 - **Auth Module:** Registro, login, JWT, gestión de contraseñas.
@@ -77,7 +149,62 @@
 - **Voting Module:** Lista de videos públicos, votación, control antifraude.
 - **Ranking Module:** Generación dinámica y cache de rankings.
 - **Storage Adapter:** Abstracción para sistema de archivos, preparada para S3.
-  
+
+```mermaid
+graph TB
+    subgraph "FastAPI Application"
+        subgraph "API Gateway Layer"
+            A[Route Dispatcher<br/>/api/*]
+        end
+        
+        subgraph "Business Components"
+            B[Auth Module]
+            C[Video Module]
+            D[Voting Module]
+            E[Ranking Module]
+        end
+        
+        subgraph "Infrastructure Components"
+            F[Async Task Manager]
+            G[Storage Adapter]
+        end
+    end
+    
+    subgraph "External Systems"
+        H[PostgreSQL<br/>Main Database]
+        I[Redis<br/>Cache]
+        J[RabbitMQ<br/>Message Broker]
+        K[File System<br/>Video Storage]
+        L[Future: AWS S3]
+    end
+    
+    %% Internal connections
+    A --> B
+    A --> C
+    A --> D
+    A --> E
+    
+    C --> F
+    C --> G
+    
+    %% External connections
+    B --> H
+    C --> H
+    D --> H
+    E --> H
+    
+    D --> I
+    E --> I
+    
+    F --> J
+    F --> H
+    F --> K
+    
+    G --> K
+    G -.-> L
+
+```
+
 ---
 
 ## 5. Selección de Tecnologías
@@ -153,13 +280,88 @@
 
 ## 11. Diagrama de Despliegue
 
-
+```mermaid
+graph TB
+    A[👤 Usuario] <--> B[🔄 Nginx<br/>Reverse Proxy<br/>Docker]
+    B --> C[⚡ API FastAPI<br/>Python Application<br/>Docker]
+    C --> D[⚙️ Celery Worker<br/>Video Processing<br/>Docker]
+    
+    C --> E[🐇 RabbitMQ<br/>Message Broker<br/>Docker]
+    C --> F[🐘 PostgreSQL<br/>Main Database<br/>Docker]
+    C --> G[🔴 Redis<br/>Cache<br/>Docker]
+    
+    D --> E
+    D --> F
+    D --> G
+    
+    C --> H[💽 Volumen Archivos<br/>Locales Host<br/> AWS S3]
+    D --> H
+    
+    style A fill:#e1f5fe
+    style B fill:#fff3e0
+    style C fill:#e8f5e8
+    style D fill:#f3e5f5
+    style E fill:#ffebee
+    style F fill:#e0f2f1
+    style G fill:#fff8e1
+    style H fill:#fce4ec
+```
 ---
 
 
 ## 12. Diagrama Entidad-Relación (ERD) 
 
 
+```mermaid
+erDiagram
+    USERS {
+        string id PK "UUID"
+        string email UK "NOT NULL"
+        string first_name "NOT NULL"
+        string last_name "NOT NULL"
+        string city
+        string country
+        string password_hash "NOT NULL"
+        datetime created_at "NOT NULL"
+        datetime updated_at "NOT NULL"
+    }
+
+    VIDEOS {
+        string id PK "UUID"
+        string user_id FK "NOT NULL"
+        string title "NOT NULL"
+        string original_filename "NOT NULL"
+        string status "NOT NULL"
+        string original_url "NOT NULL"
+        string processed_url
+        integer duration_seconds
+        integer votes_count "DEFAULT 0"
+        datetime uploaded_at "NOT NULL"
+        datetime processed_at
+        datetime created_at "NOT NULL"
+    }
+
+    VOTES {
+        string id PK "UUID"
+        string user_id FK "NOT NULL"
+        string video_id FK "NOT NULL"
+        datetime voted_at "NOT NULL"
+    }
+
+    PROCESSING_TASKS {
+        string id PK "UUID"
+        string video_id FK "NOT NULL"
+        string task_id "NOT NULL"
+        string status "NOT NULL"
+        json task_metadata
+        datetime created_at "NOT NULL"
+        datetime updated_at "NOT NULL"
+    }
+
+    USERS ||--o{ VIDEOS : "creates"
+    USERS ||--o{ VOTES : "makes"
+    VIDEOS ||--o{ VOTES : "receives"
+    VIDEOS ||--o{ PROCESSING_TASKS : "has"```
 
 ## 13. Decisiones arquitectónicas clave (ADR)
 
