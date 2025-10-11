@@ -119,6 +119,7 @@ Toda la documentación se encuentra en `docs/Entrega_1/`:
 - [Modelo de Datos (ERD)](docs/Entrega_1/modelo-datos.md)
 - [Diagramas C4](docs/Entrega_1/diagramas/)
 - [Decisiones Arquitectónicas (ADR)](docs/Entrega_1/decisiones-adr.md)
+- [Diagrama de Secuencia (Video)](docs/Entrega_1/diagrama-secuencia-video.md)
 
 ## Sustentación
 
