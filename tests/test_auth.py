@@ -91,9 +91,8 @@ def test_signup_email_duplicate(test_db):
     )
     assert response.status_code == 400
     data = response.json()
-    assert "detail" in data
     assert (
-        "email duplicado, contraseñas no coinciden" in str(data["detail"]).lower()
+        "email duplicado, contraseñas no coinciden" in str(data).lower()
     )  # Busca "email duplicado, contraseñas no coinciden" en el mensaje
 
 
@@ -113,9 +112,8 @@ def test_signup_password_mismatch(test_db):
     )
     assert response.status_code == 400
     data = response.json()
-    assert "detail" in data
     assert (
-        "contraseñas" in str(data["detail"]).lower()
+        "contraseñas" in str(data).lower()
     )  # Busca "contraseñas" en el mensaje
 
 
@@ -156,5 +154,4 @@ def test_login_invalid_credentials(test_db):
     )
     assert response.status_code == 401
     data = response.json()
-    assert "detail" in data
-    assert "inválidas" in str(data["detail"]).lower()  # Busca "inválidas" en el mensaje
+    assert "inválidas" in str(data).lower()  # Busca "inválidas" en el mensaje

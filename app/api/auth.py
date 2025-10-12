@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response
 from starlette.responses import JSONResponse
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from ..schemas.auth_schemas import UserCreate, UserLogin, Token
 from ..models.user import User
 from ..core.security import get_password_hash, verify_password, create_access_token
 from ..core.config import settings
@@ -10,26 +10,6 @@ import uuid
 from datetime import timedelta
 
 router = APIRouter()
-
-
-class UserCreate(BaseModel):
-    first_name: str
-    last_name: str
-    email: str
-    password1: str
-    password2: str
-    city: str
-    country: str
-
-
-class UserLogin(BaseModel):
-    email: str
-    password: str
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
 
 
 @router.post("/signup")
