@@ -97,6 +97,43 @@ Documentación completa en OpenAPI: `http://localhost:8080/docs` (cuando esté c
 
 ## Pruebas
 
+### Pruebas Unitarias
+
+Las pruebas unitarias están ubicadas en la carpeta `tests/`. Para ejecutarlas:
+
+1. **Activa el entorno virtual** (si no está activado):
+
+   ```bash
+   venv\Scripts\activate  # En Windows
+   # source venv/bin/activate  # En Linux/Mac
+   ```
+
+2. **Instala dependencias de desarrollo** (si no están instaladas):
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Ejecuta todas las pruebas en la carpeta `tests/`**:
+
+   ```bash
+   pytest tests/
+   ```
+
+4. **Ejecuta un archivo específico** (ej. `test_auth.py`):
+
+   ```bash
+   pytest tests/test_auth.py
+   ```
+
+5. **Ejecuta con más detalle** (verbose):
+
+   ```bash
+   pytest tests/ -v
+   ```
+
+Las pruebas incluyen validaciones para endpoints, manejo de errores, y base de datos de prueba (SQLite temporal).
+
 ### Con Postman
 
 1. Importa la colección: `collections/postman_collection.json`.
