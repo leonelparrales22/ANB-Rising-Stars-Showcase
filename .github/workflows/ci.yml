@@ -1,10 +1,6 @@
 name: CI Pipeline
 
 on:
-  push:
-    branches:
-      - feature/login
-
   pull_request:
     branches:
       - main
@@ -67,7 +63,7 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL || 'https://sonarcloud.io' }}
         with:
           args: >
-            -Dsonar.projectKey=ANB-Rising-Stars-Showcase
+            -Dsonar.projectKey=leonelparrales22_ANB-Rising-Stars-Showcase
             -Dsonar.organization=leonelparrales22
             -Dsonar.sources=app/
             -Dsonar.tests=tests/
