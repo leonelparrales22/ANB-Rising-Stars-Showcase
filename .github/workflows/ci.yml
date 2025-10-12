@@ -64,6 +64,7 @@ jobs:
         with:
           args: >
             -Dsonar.projectKey=ANB-Rising-Stars-Showcase
+            -Dsonar.organization=leonelparrales22
             -Dsonar.sources=app/
             -Dsonar.tests=tests/
             -Dsonar.python.coverage.reportPaths=coverage.xml
