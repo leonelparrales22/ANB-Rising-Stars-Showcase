@@ -1,6 +1,12 @@
 name: CI Pipeline
 
 on:
+  push:
+    branches:
+      - main
+      - develop
+      - feature/*
+      
   pull_request:
     branches:
       - main
@@ -69,3 +75,4 @@ jobs:
             -Dsonar.tests=tests/
             -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.python.version=3.10
+            ${{ github.event_name == 'push' && format('-Dsonar.branch.name={0}', github.ref_name) || '' }}
