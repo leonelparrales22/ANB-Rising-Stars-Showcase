@@ -45,7 +45,7 @@ jobs:
       - name: Build Docker image
         run: |
           cd docker
-          docker-compose build api
+          docker compose build api
 
   sonar:
     runs-on: ubuntu-latest
