@@ -115,3 +115,7 @@ test.db
 
 # Temporal directories
 **/temp
+
+# Uploads
+uploads/
+assets/
