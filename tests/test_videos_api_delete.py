@@ -80,13 +80,13 @@ def test_data():
                    status=VideoStatus.UPLOADED.value,
                    id_user=user1.id,
                    uploaded_at=datetime.datetime.now(datetime.UTC),
-                   file_uploaded_url="file://ruta/video.mp4")
+                   file_original_url="file://ruta/video.mp4")
     video2 = Video(id=str(uuid.uuid4()),
                    title="Volcada 360",
                    status=VideoStatus.PROCESSED.value,
                    id_user=user2.id,
                    uploaded_at=datetime.datetime.now(datetime.UTC),
-                   file_uploaded_url="file://ruta/video.mp4")
+                   file_original_url="file://ruta/video.mp4")
 
     db.add(video1)
     db.add(video2)
