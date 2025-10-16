@@ -60,9 +60,14 @@ services:
       - redis
     ports:
       - "8000:8000"
+    volumes:
+      - ../uploads:/app/uploads
+      - ../assets:/app/assets
 
   worker:
-    build: ../app-worker
+    build:
+      context: ..
+      dockerfile: app-worker/Dockerfile
     restart: always
     env_file:
       - ../.env

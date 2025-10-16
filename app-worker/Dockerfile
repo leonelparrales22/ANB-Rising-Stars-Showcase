@@ -8,11 +8,15 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar requirements y instalar dependencias
-COPY requirements.txt .
+COPY app-worker/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copiar código del worker
-COPY . .
+COPY app-worker/ .
+
+# Copiar shared y app desde el directorio raíz
+COPY shared /app/shared
+COPY app /app/app
 
 # Comando por defecto para ejecutar worker
 CMD ["celery", "-A", "worker.celery_app", "worker", "--loglevel=info", "--queues=uploaded-videos"]

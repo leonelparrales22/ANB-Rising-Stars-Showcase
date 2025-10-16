@@ -3,6 +3,14 @@ import os
 import structlog
 from datetime import datetime
 from worker.celery_app import celery_app
+from shared.database import get_db
+from shared.config import settings
+# Importar modelos desde app (evitar duplicación)
+import sys
+sys.path.append('/app')
+from app.models.video import Video, VideoStatus
+from app.models.user import User
+from app.models.vote import Vote
 
 logger = structlog.get_logger()
 
@@ -18,13 +26,22 @@ def process_video_task(self, video_id: str):
     logger.info("Starting video processing", video_id=video_id, task_id=self.request.id)
     
     try:
-        # TODO: Conectar con base de datos para obtener información del video
-        # Por ahora simulamos con rutas hardcodeadas
+        # Conectar con base de datos para obtener información del video
+        db = next(get_db())
+        video = db.query(Video).filter(Video.id == video_id).first()
         
-        # Rutas de archivos
-        input_path = f"uploads/{video_id}.mp4"
-        temp_path = f"uploads/temp_{video_id}.mp4"
-        output_path = f"uploads/processed_{video_id}.mp4"
+        if not video:
+            raise Exception(f"Video con ID {video_id} no encontrado en la base de datos")
+        
+        # Actualizar estado a PROCESSING
+        video.status = VideoStatus.PROCESSING.value
+        video.processing_started_at = datetime.utcnow()
+        db.commit()
+        
+        # Rutas de archivos usando configuración
+        input_path = video.file_original_url
+        temp_path = f"{settings.uploads_dir}/temp_{video_id}.mp4"
+        output_path = f"{settings.uploads_dir}/processed_{video_id}.mp4"
         
         # Verificar que existe el archivo original
         if not os.path.exists(input_path):
@@ -38,9 +55,17 @@ def process_video_task(self, video_id: str):
         
         # Paso 2: Ajustar a 720p 16:9
         logger.info("Step 2: Resizing to 720p 16:9", video_id=video_id)
-        resize_result = resize_to_720p_16_9(temp_path, temp_path)
+        temp_resized_path = f"{settings.uploads_dir}/temp_resized_{video_id}.mp4"
+        resize_result = resize_to_720p_16_9(temp_path, temp_resized_path)
         if not resize_result:
             raise Exception("Error en redimensionado de video")
+        
+        # Limpiar archivo temporal anterior
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+        
+        # Renombrar archivo redimensionado
+        os.rename(temp_resized_path, temp_path)
         
         # Paso 3: Agregar cortinillas ANB
         logger.info("Step 3: Adding ANB intro/outro", video_id=video_id)
@@ -56,7 +81,26 @@ def process_video_task(self, video_id: str):
                    video_id=video_id, 
                    output_path=output_path)
         
-        # TODO: Actualizar base de datos con resultado
+        # Limpiar archivos temporales
+        temp_files_to_clean = [
+            f"{settings.uploads_dir}/temp_{video_id}.mp4",
+            f"{settings.uploads_dir}/temp_resized_{video_id}.mp4"
+        ]
+        
+        for temp_file in temp_files_to_clean:
+            if os.path.exists(temp_file):
+                try:
+                    os.remove(temp_file)
+                    logger.info("Cleaned temporary file", file_path=temp_file)
+                except Exception as e:
+                    logger.warning("Could not clean temporary file", file_path=temp_file, error=str(e))
+        
+        # Actualizar base de datos con resultado exitoso
+        video.status = VideoStatus.PROCESSED.value
+        video.file_processed_url = output_path
+        video.processed_at = datetime.utcnow()
+        db.commit()
+        
         return {
             "status": "completed",
             "video_id": video_id,
@@ -70,8 +114,32 @@ def process_video_task(self, video_id: str):
                     error=str(exc), 
                     task_id=self.request.id)
         
-        # TODO: Actualizar base de datos con error
-        raise self.retry(exc=exc, countdown=60, max_retries=3)
+        # Limpiar archivos temporales en caso de error
+        temp_files_to_clean = [
+            f"{settings.uploads_dir}/temp_{video_id}.mp4",
+            f"{settings.uploads_dir}/temp_resized_{video_id}.mp4"
+        ]
+        
+        for temp_file in temp_files_to_clean:
+            if os.path.exists(temp_file):
+                try:
+                    os.remove(temp_file)
+                    logger.info("Cleaned temporary file after error", file_path=temp_file)
+                except Exception as e:
+                    logger.warning("Could not clean temporary file after error", file_path=temp_file, error=str(e))
+        
+        # Actualizar base de datos con error (sin reintentos por ahora)
+        try:
+            if db:
+                video = db.query(Video).filter(Video.id == video_id).first()
+                if video:
+                    video.status = VideoStatus.FAILED.value
+                    db.commit()
+        except Exception as db_error:
+            logger.error("Error updating database with failure status", error=str(db_error))
+        
+        # No reintentos por ahora - solo marcar como fallido
+        raise exc
 
 
 def trim_video_to_30s(input_path: str, output_path: str) -> bool:
@@ -98,13 +166,15 @@ def resize_to_720p_16_9(input_path: str, output_path: str) -> bool:
     try:
         cmd = [
             'ffmpeg', '-i', input_path,
-            '-vf', 'scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2',
+            '-vf', 'scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=black',
             '-c:a', 'copy',  # Copiar audio sin re-encoding
             '-y',
             output_path
         ]
         
         result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            logger.error("FFmpeg error", stderr=result.stderr, stdout=result.stdout)
         return result.returncode == 0
         
     except Exception as e:
@@ -115,14 +185,14 @@ def resize_to_720p_16_9(input_path: str, output_path: str) -> bool:
 def add_anb_intro_outro(input_path: str, output_path: str) -> bool:
     """Agregar cortinillas de apertura y cierre de ANB (5 segundos cada una)"""
     try:
-        # TODO: Crear archivos de cortinillas ANB
-        # Por ahora simulamos concatenación
+        # Crear directorio assets si no existe
+        os.makedirs(settings.assets_dir, exist_ok=True)
         
-        intro_path = "assets/anb_intro_5s.mp4"
-        outro_path = "assets/anb_outro_5s.mp4"
+        intro_path = f"{settings.assets_dir}/anb_intro_5s.mp4"
+        outro_path = f"{settings.assets_dir}/anb_outro_5s.mp4"
         
-        # Si no existen las cortinillas, crear un video simple
-        if not os.path.exists(intro_path):
+        # Si no existen las cortinillas, crear videos simples
+        if not os.path.exists(intro_path) or not os.path.exists(outro_path):
             create_simple_intro_outro(intro_path, outro_path)
         
         # Concatenar: intro + video principal + outro
@@ -149,23 +219,30 @@ def create_simple_intro_outro(intro_path: str, outro_path: str):
     """Crear cortinillas simples de 5 segundos (temporal)"""
     try:
         # Crear directorio assets si no existe
-        os.makedirs("assets", exist_ok=True)
+        os.makedirs(settings.assets_dir, exist_ok=True)
         
         # Crear cortinilla de 5 segundos con color sólido
         cmd_intro = [
-            'ffmpeg', '-f', 'lavfi', '-i', 'color=c=blue:size=1280x720:duration=5',
-            '-f', 'lavfi', '-i', 'anullsrc=channel_layout=stereo:sample_rate=48000',
+            'ffmpeg', '-f', 'lavfi', '-i', 'color=c=blue:size=1280x720:duration=5:rate=30',
+            '-f', 'lavfi', '-i', 'anullsrc=channel_layout=stereo:sample_rate=48000:duration=5',
+            '-c:v', 'libx264', '-c:a', 'aac', '-t', '5',
             '-y', intro_path
         ]
         
         cmd_outro = [
-            'ffmpeg', '-f', 'lavfi', '-i', 'color=c=red:size=1280x720:duration=5',
-            '-f', 'lavfi', '-i', 'anullsrc=channel_layout=stereo:sample_rate=48000',
+            'ffmpeg', '-f', 'lavfi', '-i', 'color=c=red:size=1280x720:duration=5:rate=30',
+            '-f', 'lavfi', '-i', 'anullsrc=channel_layout=stereo:sample_rate=48000:duration=5',
+            '-c:v', 'libx264', '-c:a', 'aac', '-t', '5',
             '-y', outro_path
         ]
         
-        subprocess.run(cmd_intro, capture_output=True)
-        subprocess.run(cmd_outro, capture_output=True)
+        result_intro = subprocess.run(cmd_intro, capture_output=True, text=True)
+        result_outro = subprocess.run(cmd_outro, capture_output=True, text=True)
+        
+        if result_intro.returncode != 0:
+            logger.error("Error creating intro", stderr=result_intro.stderr)
+        if result_outro.returncode != 0:
+            logger.error("Error creating outro", stderr=result_outro.stderr)
         
         logger.info("Created simple intro/outro files", intro_path=intro_path, outro_path=outro_path)
         
