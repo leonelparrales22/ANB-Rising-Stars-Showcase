@@ -60,6 +60,25 @@ services:
       - redis
     ports:
       - "8000:8000"
+    volumes:
+      - ../uploads:/app/uploads
+      - ../assets:/app/assets
+
+  worker:
+    build:
+      context: ..
+      dockerfile: app-worker/Dockerfile
+    restart: always
+    env_file:
+      - ../.env
+    depends_on:
+      - postgres
+      - rabbitmq
+      - redis
+    volumes:
+      - ../uploads:/app/uploads
+      - ../assets:/app/assets
+    command: celery -A worker.celery_app worker --loglevel=info --queues=uploaded-videos
 
   nginx:
     image: nginx:alpine

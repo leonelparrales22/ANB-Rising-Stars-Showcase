@@ -21,9 +21,9 @@
           "raw": "{\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"email\": \"john@example.com\",\n  \"password1\": \"StrongPass123\",\n  \"password2\": \"StrongPass123\",\n  \"city\": \"Bogotá\",\n  \"country\": \"Colombia\"\n}"
         },
         "url": {
-          "raw": "{{base_url}}/auth/signup",
+          "raw": "{{base_url}}/api/auth/signup",
           "host": ["{{base_url}}"],
-          "path": ["auth", "signup"]
+          "path": ["api", "auth", "signup"]
         }
       },
       "event": [
@@ -58,9 +58,9 @@
           "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"StrongPass123\"\n}"
         },
         "url": {
-          "raw": "{{base_url}}/auth/login",
+          "raw": "{{base_url}}/api/auth/login",
           "host": ["{{base_url}}"],
-          "path": ["auth", "login"]
+          "path": ["api", "auth", "login"]
         }
       },
       "event": [
@@ -99,19 +99,21 @@
             {
               "key": "video_file",
               "type": "file",
-              "src": []
+              "src": [],
+              "description": "Archivo de video en formato MP4, máximo 100MB"
             },
             {
               "key": "title",
               "value": "Mi mejor tiro de 3",
-              "type": "text"
+              "type": "text",
+              "description": "Título descriptivo del video"
             }
           ]
         },
         "url": {
-          "raw": "{{base_url}}/videos/upload",
+          "raw": "{{base_url}}/videos/",
           "host": ["{{base_url}}"],
-          "path": ["videos", "upload"]
+          "path": ["videos", ""]
         }
       },
       "event": [
@@ -126,6 +128,7 @@
               "    var jsonData = pm.response.json();",
               "    pm.expect(jsonData).to.have.property('message');",
               "    pm.expect(jsonData).to.have.property('task_id');",
+              "    pm.expect(jsonData.message).to.include('Procesamiento en curso');",
               "});"
             ]
           }
@@ -143,9 +146,9 @@
           }
         ],
         "url": {
-          "raw": "{{base_url}}/videos",
+          "raw": "{{base_url}}/api/videos",
           "host": ["{{base_url}}"],
-          "path": ["videos"]
+          "path": ["api", "videos"]
         }
       },
       "event": [
@@ -176,9 +179,9 @@
           }
         ],
         "url": {
-          "raw": "{{base_url}}/videos/{{video_id}}",
+          "raw": "{{base_url}}/api/videos/{{video_id}}",
           "host": ["{{base_url}}"],
-          "path": ["videos", "{{video_id}}"]
+          "path": ["api", "videos", "{{video_id}}"]
         }
       },
       "event": [
@@ -211,9 +214,9 @@
           }
         ],
         "url": {
-          "raw": "{{base_url}}/videos/{{video_id}}",
+          "raw": "{{base_url}}/api/videos/{{video_id}}",
           "host": ["{{base_url}}"],
-          "path": ["videos", "{{video_id}}"]
+          "path": ["api", "videos", "{{video_id}}"]
         }
       },
       "event": [
@@ -239,9 +242,9 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{base_url}}/public/videos",
+          "raw": "{{base_url}}/api/public/videos",
           "host": ["{{base_url}}"],
-          "path": ["public", "videos"]
+          "path": ["api", "public", "videos"]
         }
       },
       "event": [
@@ -272,9 +275,9 @@
           }
         ],
         "url": {
-          "raw": "{{base_url}}/public/videos/{{video_id}}/vote",
+          "raw": "{{base_url}}/api/public/videos/{{video_id}}/vote",
           "host": ["{{base_url}}"],
-          "path": ["public", "videos", "{{video_id}}", "vote"]
+          "path": ["api", "public", "videos", "{{video_id}}", "vote"]
         }
       },
       "event": [
@@ -300,9 +303,9 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{base_url}}/public/rankings",
+          "raw": "{{base_url}}/api/public/rankings",
           "host": ["{{base_url}}"],
-          "path": ["public", "rankings"]
+          "path": ["api", "public", "rankings"]
         }
       },
       "event": [

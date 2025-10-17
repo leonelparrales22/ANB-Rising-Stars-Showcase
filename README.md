@@ -15,7 +15,7 @@ Este proyecto es una aplicación web escalable para la gestión de archivos y pr
 
 ## Descripción del Proyecto
 
-La plataforma permite a jugadores aficionados registrarse, subir videos de habilidades, procesarlos de manera asíncrona (recorte, ajuste de formato, marca de agua), y recibir votaciones públicas para generar rankings. Incluye autenticación JWT, gestión de archivos, y orquestación con Docker.
+La plataforma permite a jugadores aficionados registrarse, subir videos de habilidades, procesarlos de manera asíncrona (recorte a 30s, ajuste a 720p 16:9, cortinillas ANB), y recibir votaciones públicas para generar rankings. Incluye autenticación JWT, gestión de archivos, procesamiento asíncrono con Celery, y orquestación con Docker.
 
 ### Tecnologías Principales
 
@@ -23,9 +23,11 @@ La plataforma permite a jugadores aficionados registrarse, subir videos de habil
 - **Base de Datos**: PostgreSQL
 - **Autenticación**: JWT
 - **Procesamiento Asíncrono**: Celery + RabbitMQ
+- **Procesamiento de Video**: FFmpeg
 - **Proxy Reverso**: NGINX
 - **Contenedorización**: Docker + Docker Compose
 - **Almacenamiento**: Sistema de archivos local (preparado para S3)
+- **Logging**: Estructurado con video_id y task_id
 
 ## Requisitos Previos
 
@@ -63,8 +65,11 @@ docker-compose up --build
 
 Esto iniciará:
 
-- PostgreSQL en puerto 5432.
+- PostgreSQL en puerto 5433.
 - FastAPI API en puerto 8000 (interno).
+- Celery Worker para procesamiento asíncrono.
+- RabbitMQ en puerto 5672 (AMQP) y 15672 (Management UI).
+- Redis en puerto 6379.
 - NGINX proxy en puerto 8080 (accede vía `http://localhost:8080`).
 
 La API estará disponible en `http://localhost:8080/api/...`.
@@ -81,17 +86,28 @@ Para limpiar volúmenes (datos de DB):
 docker-compose down -v
 ```
 
-## Endpoints Disponibles (Entrega 1)
+## Endpoints Disponibles
 
+### Autenticación
 - **POST /api/auth/signup**: Registro de nuevos jugadores (201 on success).
 - **POST /api/auth/login**: Autenticación y obtención de token JWT (200 on success).
-- **POST /api/videos/upload**: Subir video (requiere auth, inicia procesamiento asíncrono).
+
+### Gestión de Videos
+- **POST /api/videos/**: Subir video MP4 (máx 100MB, requiere auth, inicia procesamiento asíncrono).
 - **GET /api/videos**: Lista videos del usuario autenticado.
 - **GET /api/videos/{video_id}**: Detalle de un video específico.
-- **DELETE /api/videos/{video_id}**: Eliminar video propio (si permitido).
+- **DELETE /api/videos/{video_id}**: Eliminar video propio (solo si no tiene votos y no está procesado).
+
+### Público
 - **GET /api/public/videos**: Lista videos públicos para votación.
 - **POST /api/public/videos/{video_id}/vote**: Votar por un video (requiere auth).
 - **GET /api/public/rankings**: Ranking de jugadores por votos.
+
+### Procesamiento de Videos
+Los videos subidos se procesan automáticamente:
+1. **Recorte**: Máximo 30 segundos
+2. **Redimensionado**: 720p con relación 16:9
+3. **Cortinillas**: Agregado de apertura y cierre ANB (5s cada una)
 
 Documentación completa en OpenAPI: `http://localhost:8080/docs` (cuando esté corriendo).
 
@@ -170,13 +186,37 @@ Ver [capacity-planning/plan_de_pruebas.md](capacity-planning/plan_de_pruebas.md)
 
 - **v1.0.0**: Primera entrega con auth endpoints y Docker setup. [Ver release](https://github.com/leonelparrales22/ANB-Rising-Stars-Showcase/releases/tag/v1.0.0)
 
+## Arquitectura del Sistema
+
+### Estructura de Microservicios
+```
+ANB-Rising-Stars-Showcase/
+├── app/                    # FastAPI (API REST)
+├── app-worker/            # Celery Workers (Procesamiento)
+├── docker/               # Configuración Docker Compose
+├── uploads/              # Videos originales y procesados
+└── assets/               # Cortinillas ANB
+```
+
+### Flujo de Procesamiento
+1. **Upload**: Usuario sube video → API guarda archivo → Estado: `UPLOADED`
+2. **Encolar**: API envía tarea a cola `uploaded-videos` → Estado: `PROCESSING`
+3. **Procesar**: Worker ejecuta tareas de video → Estado: `PROCESSED` o `FAILED`
+4. **Resultado**: Video procesado disponible para votación
+
+### Almacenamiento
+- **Videos Originales**: `uploads/{video_id}.mp4`
+- **Videos Procesados**: `uploads/processed_{video_id}.mp4`
+- **Cortinillas**: `assets/anb_intro_5s.mp4`, `assets/anb_outro_5s.mp4`
+
 ## Notas Adicionales
 
 - Las tablas se crean automáticamente al iniciar la API.
-- Volumen Docker `anb_postgres_data` persiste datos de DB.
+- Volúmenes Docker persisten datos de DB y archivos.
 - Para desarrollo local, usa `docker-compose up` sin `--build` después del primer build.
-- Asegúrate de que los puertos 5432, 8000, 8080 estén libres.
-- Futuras entregas incluirán procesamiento asíncrono completo, votación, rankings, y despliegue en nube.
+- Asegúrate de que los puertos 5433, 8000, 8080, 5672, 15672, 6379 estén libres.
+- RabbitMQ Management UI disponible en `http://localhost:15672` (admin/admin).
+- Los videos se procesan automáticamente en segundo plano.
 
 ## Contribución
 
