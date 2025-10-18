@@ -23,7 +23,7 @@ router_videos = APIRouter()
 bearer = HTTPBearer()
 
 
-@router_videos.post("/", response_class=JSONResponse)
+@router_videos.post("/upload", response_class=JSONResponse)
 def upload_video(
     title: str = Form(..., min_length=1, max_length=255),
     video_file: UploadFile = File(...),
