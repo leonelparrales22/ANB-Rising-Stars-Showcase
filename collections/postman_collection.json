@@ -1,333 +1,424 @@
 {
-  "info": {
-    "name": "ANB Rising Stars Showcase API",
-    "description": "Colección de Postman para probar los endpoints de la API REST de ANB Rising Stars Showcase según las especificaciones de INSTRUCCIONES.",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "version": "1.0.0"
-  },
-  "item": [
-    {
-      "name": "Auth - Signup",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"email\": \"john@example.com\",\n  \"password1\": \"StrongPass123\",\n  \"password2\": \"StrongPass123\",\n  \"city\": \"Bogotá\",\n  \"country\": \"Colombia\"\n}"
-        },
-        "url": {
-          "raw": "{{base_url}}/auth/signup",
-          "host": ["{{base_url}}"],
-          "path": ["auth", "signup"]
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Status code is 201\", function () {",
-              "    pm.response.to.have.status(201);",
-              "});",
-              "pm.test(\"Response has success message\", function () {",
-              "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData).to.have.property('message');",
-              "});"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Auth - Login",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"StrongPass123\"\n}"
-        },
-        "url": {
-          "raw": "{{base_url}}/auth/login",
-          "host": ["{{base_url}}"],
-          "path": ["auth", "login"]
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Status code is 200\", function () {",
-              "    pm.response.to.have.status(200);",
-              "});",
-              "pm.test(\"Response has access_token\", function () {",
-              "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData).to.have.property('access_token');",
-              "    pm.expect(jsonData).to.have.property('token_type', 'Bearer');",
-              "    pm.expect(jsonData).to.have.property('expires_in');",
-              "    pm.collectionVariables.set('access_token', jsonData.access_token);",
-              "});"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Videos - Upload",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Authorization",
-            "value": "Bearer {{access_token}}"
-          }
-        ],
-        "body": {
-          "mode": "formdata",
-          "formdata": [
-            {
-              "key": "video_file",
-              "type": "file",
-              "src": []
-            },
-            {
-              "key": "title",
-              "value": "Mi mejor tiro de 3",
-              "type": "text"
-            }
-          ]
-        },
-        "url": {
-          "raw": "{{base_url}}/videos/upload",
-          "host": ["{{base_url}}"],
-          "path": ["videos", "upload"]
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Status code is 201\", function () {",
-              "    pm.response.to.have.status(201);",
-              "});",
-              "pm.test(\"Response has message and task_id\", function () {",
-              "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData).to.have.property('message');",
-              "    pm.expect(jsonData).to.have.property('task_id');",
-              "});"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Videos - List My Videos",
-      "request": {
-        "method": "GET",
-        "header": [
-          {
-            "key": "Authorization",
-            "value": "Bearer {{access_token}}"
-          }
-        ],
-        "url": {
-          "raw": "{{base_url}}/videos",
-          "host": ["{{base_url}}"],
-          "path": ["videos"]
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Status code is 200\", function () {",
-              "    pm.response.to.have.status(200);",
-              "});",
-              "pm.test(\"Response is array\", function () {",
-              "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData).to.be.an('array');",
-              "});"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Videos - Get Video Detail",
-      "request": {
-        "method": "GET",
-        "header": [
-          {
-            "key": "Authorization",
-            "value": "Bearer {{access_token}}"
-          }
-        ],
-        "url": {
-          "raw": "{{base_url}}/videos/{{video_id}}",
-          "host": ["{{base_url}}"],
-          "path": ["videos", "{{video_id}}"]
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Status code is 200\", function () {",
-              "    pm.response.to.have.status(200);",
-              "});",
-              "pm.test(\"Response has video details\", function () {",
-              "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData).to.have.property('video_id');",
-              "    pm.expect(jsonData).to.have.property('title');",
-              "    pm.expect(jsonData).to.have.property('status');",
-              "});"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Videos - Delete Video",
-      "request": {
-        "method": "DELETE",
-        "header": [
-          {
-            "key": "Authorization",
-            "value": "Bearer {{access_token}}"
-          }
-        ],
-        "url": {
-          "raw": "{{base_url}}/videos/{{video_id}}",
-          "host": ["{{base_url}}"],
-          "path": ["videos", "{{video_id}}"]
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Status code is 200\", function () {",
-              "    pm.response.to.have.status(200);",
-              "});",
-              "pm.test(\"Response has success message\", function () {",
-              "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData).to.have.property('message');",
-              "});"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Public - List Videos",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{base_url}}/public/videos",
-          "host": ["{{base_url}}"],
-          "path": ["public", "videos"]
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Status code is 200\", function () {",
-              "    pm.response.to.have.status(200);",
-              "});",
-              "pm.test(\"Response is array\", function () {",
-              "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData).to.be.an('array');",
-              "});"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Public - Vote for Video",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Authorization",
-            "value": "Bearer {{access_token}}"
-          }
-        ],
-        "url": {
-          "raw": "{{base_url}}/public/videos/{{video_id}}/vote",
-          "host": ["{{base_url}}"],
-          "path": ["public", "videos", "{{video_id}}", "vote"]
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Status code is 200\", function () {",
-              "    pm.response.to.have.status(200);",
-              "});",
-              "pm.test(\"Response has success message\", function () {",
-              "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData).to.have.property('message');",
-              "});"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Public - Get Rankings",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{base_url}}/public/rankings",
-          "host": ["{{base_url}}"],
-          "path": ["public", "rankings"]
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Status code is 200\", function () {",
-              "    pm.response.to.have.status(200);",
-              "});",
-              "pm.test(\"Response is array\", function () {",
-              "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData).to.be.an('array');",
-              "});"
-            ]
-          }
-        }
-      ]
-    }
-  ],
-  "variable": [
-    {
-      "key": "video_id",
-      "value": "example-video-id",
-      "type": "string"
-    }
-  ]
+	"info": {
+		"_postman_id": "73ad996e-9059-4591-ba7c-3c3eb20ef415",
+		"name": "ANB Rising Stars Showcase API",
+		"description": "Colección de Postman para probar los endpoints de la API REST de ANB Rising Stars Showcase según las especificaciones del proyecto. Esta API contiene 3 recursos principales:\n\n- `/auth`: recurso usado por los usuarios registrados en el sistema. Ofrece operaciones de registro (`/signup`) y autenticación mediante email y password (`/login`).\n    \n- `/videos`: recurso que representa los videos publicados por los usuarios. Ofrece operaciones de subida (`/upload`), listado , consulta de detalle y borrado de videos.\n    \n- `/public`: recurso al que accede el público para votar por videos publicados (`/vote`) y consultar el ranking de videos más votados (`/rankings`). También ofrece una operación para consultar los videos procesados disponibles para votación (`/videos`).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "14601714"
+	},
+	"item": [
+		{
+			"name": "Auth - Signup",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"pm.test(\"Response has success message\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('message');",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"email\": \"john@example.com\",\n  \"password1\": \"StrongPass123\",\n  \"password2\": \"StrongPass123\",\n  \"city\": \"Bogotá\",\n  \"country\": \"Colombia\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/auth/signup",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"auth",
+						"signup"
+					]
+				},
+				"description": "Permite registrar nuevos usuarios en la plataforma como primer paso para usar el resto de APIs.\n\nSeguridad:\n\n- No requiere token JWT.\n    \n\nValidaciones / reglas:\n\n- Valida que el correo electrónico sea único.\n    \n- Valida que la contraseña y la confirmación sean iguales.\n    \n- Todos los campos son obligatorios excepto `country`.\n    \n\nParámetros:\n\n``` json\n{\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password1\": \"StrongP@ssw0rd123\",\n  \"password2\": \"StrongP@ssw0rd123\",\n  \"city\": \"New York\",\n  \"country\": \"United States\"\n}\n\n ```\n\nCódigos de respuesta:\n\n- `201` - Usuario creado exitosamente.\n    \n- `400` - Error de validación (email duplicado, contraseñas no coinciden).\n    \n\nCuerpo de la respuesta:\n\nCódigo \\`201\\`:\n\n``` json\n{\n  \"message\": \"Usuario creado exitosamente.\"\n}\n\n ```\n\nCódigo `400`:\n\n``` json\n{\n  \"message\": \"Mensaje.\"\n}\n\n ```"
+			},
+			"response": []
+		},
+		{
+			"name": "Auth - Login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Response has access_token\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('access_token');",
+							"    pm.expect(jsonData).to.have.property('token_type', 'Bearer');",
+							"    pm.expect(jsonData).to.have.property('expires_in');",
+							"    pm.collectionVariables.set('access_token', jsonData.access_token);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"StrongPass123\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/auth/login",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"auth",
+						"login"
+					]
+				},
+				"description": "Permite autenticar a los usuarios registrados. Genera un token JWT válido que será necesario para acceder a los recursos protegidos de la API.\n\nSeguridad:\n\n- No requiere token JWT.\n    \n\nValidaciones / reglas:\n\n- Valida que el usuario exista con el correo enviado en la petición.\n    \n- Valida que el password enviado sea el correcto.\n    \n\nParámetros:\n\n``` json\n{\n  \"email\": \"user@example.com\",\n  \"password\": \"MyS3cretP@ssw0rd\"\n}\n\n ```\n\nCódigos de respuesta:\n\n- `201` - Autenticación exitosa y generación de token.\n    \n- `401` - Credenciales inválidas.\n    \n\nCuerpo de la respuesta:\n\nCódigo `201`:\n\n``` json\n{\n  \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"token_type\": \"Bearer\",\n  \"expires_in\": 3600\n}\n\n ```\n\nCódigo `401`:\n\n``` json\n{\n  \"message\": \"Credenciales inválidas\"\n}\n\n ```"
+			},
+			"response": []
+		},
+		{
+			"name": "Videos - Upload",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"pm.test(\"Response has message and task_id\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('message');",
+							"    pm.expect(jsonData).to.have.property('task_id');",
+							"    pm.expect(jsonData.message).to.include('Procesamiento en curso');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "video_file",
+							"description": "Archivo de video en formato MP4, máximo 100MB",
+							"type": "file",
+							"src": []
+						},
+						{
+							"key": "title",
+							"value": "Mi mejor tiro de 3",
+							"description": "Título descriptivo del video",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{base_url}}/videos/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"videos",
+						""
+					]
+				},
+				"description": "Permite a los usuarios autenticados subir un video a la plataforma, iniciando su procesamiento asíncrono para su posterior publicación y visualización.\n\nSeguridad:\n\n- Requiere token JWT válido en el header `Authorization`.\n    \n\n```\nAuthorization: Bearer eyJhbGciOiJIUzI1NiIs...\n\n ```\n\nValidaciones / reglas:\n\n- Valida que se suba un solo archivo de video y que sea de extensión mp4.\n    \n- Valida el tamaño máximo de archivos de 100 MB.\n    \n- Guarda el archivo en el storage y lo programa para el posterior procesamiento por parte del worker.\n    \n\nParámetros:\n\n``` json\n{\n  \"email\": \"user@example.com\",\n  \"password\": \"MyS3cretP@ssw0rd\"\n}\n\n ```\n\nCódigos de respuesta:\n\n- `201` - Video subido correctamente. Procesamiento en curso.\n    \n- `400` - No se proporcionó archivo de video.\n    \n- `400` - El archivo debe ser MP4.\n    \n- `400` - El archivo excede el límite de 100MB.\n    \n- `401 -` Falta de autenticación.\n    \n- `500` - Error al guardar archivo: .\n    \n\nCuerpo de la respuesta:\n\nCódigo `201`:\n\n``` json\n{\n  \"message\": \"Video subido correctamente. Procesamiento en curso.\",\n  \"task_id\": 1\n}\n\n ```\n\nCódigos `400`, `500`:\n\n``` json\n{\n  \"message\": \"Mensaje.\"\n}\n\n ```"
+			},
+			"response": []
+		},
+		{
+			"name": "Videos - List My Videos",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Response is array\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.be.an('array');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/videos",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"videos"
+					]
+				},
+				"description": "Retorna una lista de todos los videos subidos por el usuario autenticado.\n\nSeguridad:\n\n- Requiere token JWT válido en el header `Authorization`.\n    \n\n```\nAuthorization: Bearer eyJhbGciOiJIUzI1NiIs...\n\n ```\n\nValidaciones / reglas:\n\n- Solo retorna los videos publicados por el usuario en cualquier estado.\n    \n\nParámetros:\n\n- No tiene parámetros.\n    \n\nCódigos de respuesta:\n\n- `200` - Lista de videos obtenida.\n    \n- `401` - Falta de autenticación.\n    \n\nCuerpo de la respuesta:\n\nCódigo `200`:\n\n``` json\n[\n  {\n    \"video_id\": \"123456\",\n    \"title\": \"Mi mejor tiro de 3\",\n    \"status\": \"processed\",\n    \"uploaded_at\": \"2025-03-10T14:30:00Z\",\n    \"processed_at\": \"2025-03-10T14:35:00Z\",\n    \"processed_url\": \"https://anb.com/videos/processed/123456.mp4\"\n  },\n  {\n    \"video_id\": \"654321\",\n    \"title\": \"Habilidades de dribleo\",\n    \"status\": \"uploaded\",\n    \"uploaded_at\": \"2025-03-11T10:15:00Z\"\n  }\n]\n\n ```\n\nCódigo `401`:\n\n``` json\n{\n  \"message\": \"Falta de autenticación.\"\n}\n\n ```"
+			},
+			"response": []
+		},
+		{
+			"name": "Videos - Get Video Detail",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Response has video details\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('video_id');",
+							"    pm.expect(jsonData).to.have.property('title');",
+							"    pm.expect(jsonData).to.have.property('status');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/videos/{{video_id}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"videos",
+						"{{video_id}}"
+					]
+				},
+				"description": "Retorna el detalle de un video específico del usuario autenticado.\n\nSeguridad:\n\n- Requiere token JWT válido en el header `Authorization`.\n    \n\n```\nAuthorization: Bearer eyJhbGciOiJIUzI1NiIs...\n\n ```\n\nValidaciones / reglas:\n\n- Valida si el usuario autenticado es el dueño del video solicitado.\n    \n- Validar que exista un video registrado con el ID enviado.\n    \n\nParámetros:\n\nParámetros del path:\n\n- `id_video`: ID del video a consultar.\n    \n\n```\n/videos/<id_video>\n\n ```\n\nCódigos de respuesta:\n\n- `200` - Consulta exitosa. Se devuelve el detalle del video.\n    \n- `400` - El video con el video_id especificado no existe o no pertenece al usuario.\n    \n- `401` - El usuario no está autenticado o el token JWT es inválido o expirado.\n    \n- `403` - El usuario autenticado no tiene permisos para acceder a este video (no es el propietario).\n    \n\nCuerpo de la respuesta:\n\nCódigo `200`:\n\n``` json\n{\n  \"video_id\": \"a1b2c3d4\",\n  \"title\": \"Tiros de tres en movimiento\",\n  \"status\": \"processed\",\n  \"uploaded_at\": \"2025-03-15T14:22:00Z\",\n  \"processed_at\": \"2025-03-15T15:10:00Z\",\n  \"original_url\": \"https://anb.com/uploads/a1b2c3d4.mp4\",\n  \"processed_url\": \"https://anb.com/processed/a1b2c3d4.mp4\",\n  \"votes\": 125\n}\n\n ```\n\nCódigos `4xx`:\n\n``` json\n{\n  \"message\": \"Mensaje.\"\n}\n\n ```"
+			},
+			"response": []
+		},
+		{
+			"name": "Videos - Delete Video",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Response has success message\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('message');",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/videos/{{video_id}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"videos",
+						"{{video_id}}"
+					]
+				},
+				"description": "Permite a un usuario eliminar uno de sus videos, siempre que no haya sido publicado.\n\nSeguridad:\n\n- Requiere token JWT válido en el header `Authorization`.\n    \n\n```\nAuthorization: Bearer eyJhbGciOiJIUzI1NiIs...\n\n ```\n\nValidaciones / reglas:\n\n- Valida si el usuario autenticado es el dueño del video solicitado.\n    \n- Valida que exista un video registrado con el ID enviado.\n    \n- Validar que el video a eliminar no se encuentre en estado _processed_.\n    \n\nParámetros:\n\nParámetros del path:\n\n- `id_video`: ID del video a eliminar.\n    \n\n```\n/videos/<id_video>\n\n ```\n\nCódigos de respuesta:\n\n- `200` - El video ha sido eliminado correctamente. Se confirman los cambios en la base de datos y almacenamiento.\n    \n- `400` - El video no puede ser eliminado porque no cumple las condiciones (por ejemplo, ya está habilitado para  \n    votación).\n    \n- `401` - El usuario no está autenticado o el token JWT es inválido o expirado.\n    \n- `403` - El usuario autenticado no tiene permisos para eliminar este video (no es el propietario).\n    \n- `404` - El video con el video_id especificado no existe o no pertenece al usuario autenticado.\n    \n\nCuerpo de la respuesta:\n\nCódigo `200`:\n\n``` json\n{\n  \"message\": \"El video ha sido eliminado correctamente. Se confirman los cambios en la base de datos y almacenamiento.\"\n}\n\n ```\n\nCódigos `4xx`:\n\n``` json\n{\n  \"message\": \"Mensaje.\"\n}\n\n ```"
+			},
+			"response": []
+		},
+		{
+			"name": "Public - List Videos",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Response is array\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.be.an('array');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/public/videos",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"public",
+						"videos"
+					]
+				},
+				"description": "Retorna una lista de videos públicos disponibles para que los usuarios los vean y voten.\n\nSeguridad:\n\n- No requiere token JWT.\n    \n\nValidaciones / reglas:\n\n- Retorna todos los videos en estado _processed_.\n    \n\nParámetros:\n\n- No tiene parámetros.\n    \n\nCódigos de respuesta:\n\n- `200` - Lista de videos obtenida.\n    \n\nCuerpo de la respuesta:\n\nCódigo `200`:\n\n``` json\n[\n  {\n    \"video_id\": \"123456\",\n    \"title\": \"Mi mejor tiro de 3\",\n    \"status\": \"processed\",\n    \"uploaded_at\": \"2025-03-10T14:30:00Z\",\n    \"processed_at\": \"2025-03-10T14:35:00Z\",\n    \"processed_url\": \"https://anb.com/videos/processed/123456.mp4\"\n  },\n  {\n    \"video_id\": \"654321\",\n    \"title\": \"Habilidades de dribleo\",\n    \"status\": \"processed\",\n    \"uploaded_at\": \"2025-03-11T10:15:00Z\",\n    \"processed_at\": \"2025-03-11T10:20:00Z\",\n    \"processed_url\": \"https://anb.com/videos/processed/123457.mp4\"\n  }\n]\n\n ```"
+			},
+			"response": []
+		},
+		{
+			"name": "Public - Vote for Video",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Response has success message\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('message');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/public/videos/{{video_id}}/vote",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"public",
+						"videos",
+						"{{video_id}}",
+						"vote"
+					]
+				},
+				"description": "Permite a un usuario autenticado emitir un voto por un video publicado.\n\nSeguridad:\n\n- Requiere token JWT válido en el header `Authorization`.\n    \n\n```\nAuthorization: Bearer eyJhbGciOiJIUzI1NiIs...\n\n ```\n\nValidaciones / reglas:\n\n- Restringe el voto a una sola vez por usuario para cada video.\n    \n- Validar que exista un video registrado con el ID enviado.\n    \n\nParámetros:\n\nParámetros del path:\n\n- `id_video`: ID del video al cual se desea registrar el voto.\n    \n\n```\n/public/videos/<id_video>/vote\n\n ```\n\nCódigos de respuesta:\n\n- `200` - Voto exitoso.\n    \n- `400` - Ya has votado por este video.\n    \n- `401` - Falta de autenticación.\n    \n- `404` - Video no encontrado.\n    \n\nCuerpo de la respuesta:\n\nCódigos `200`, `400`, `500`:\n\n``` json\n{\n  \"message\": \"Mensaje.\"\n}\n\n ```"
+			},
+			"response": []
+		},
+		{
+			"name": "Public - Get Rankings",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Response is array\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.be.an('array');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/public/rankings",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"public",
+						"rankings"
+					]
+				},
+				"description": "Retorna el ranking actualizado de los jugadores con más votos.\n\nSeguridad:\n\n- No requiere token JWT.\n    \n\nValidaciones / reglas:\n\n- Retorna una tabla de posiciones de jugadores en orden descendente por número de votos.\n    \n- Opcionalmente filtra el resultado por ciudad de los jugadores.\n    \n\nParámetros:\n\nParámetros del query string:\n\n- `city`: Ciudad de los jugadores para filtrar la tabla de ranking.\n    \n\n```\n/public/rankings?city=<city>\n\n ```\n\nCódigos de respuesta:\n\n- `200` - Lista de rankings obtenida.\n    \n- `400` - Parámetro inválido en la consulta.\n    \n\nCuerpo de la respuesta:\n\nCódigo `200`:\n\n``` json\n[\n  {\n    \"position\": 1,\n    \"username\": \"superplayer\",\n    \"city\": \"Bogotá\",\n    \"votes\": 1530\n  },\n  {\n    \"position\": 2,\n    \"username\": \"nextstar\",\n    \"city\": \"Bogotá\",\n    \"votes\": 1495\n  }\n]\n\n ```\n\nCódigo `400`:\n\n``` json\n{\n  \"message\": \"Parámetro inválido en la consulta.\"\n}\n\n ```"
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "video_id",
+			"value": "example-video-id",
+			"type": "string"
+		}
+	]
 }
