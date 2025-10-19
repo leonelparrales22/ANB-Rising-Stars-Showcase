@@ -1,10 +1,10 @@
 {
 	"info": {
-		"_postman_id": "73ad996e-9059-4591-ba7c-3c3eb20ef415",
+		"_postman_id": "1b7b56d4-3a96-486e-94f9-4b33c8b4ce18",
 		"name": "ANB Rising Stars Showcase API",
 		"description": "Colección de Postman para probar los endpoints de la API REST de ANB Rising Stars Showcase según las especificaciones del proyecto. Esta API contiene 3 recursos principales:\n\n- `/auth`: recurso usado por los usuarios registrados en el sistema. Ofrece operaciones de registro (`/signup`) y autenticación mediante email y password (`/login`).\n    \n- `/videos`: recurso que representa los videos publicados por los usuarios. Ofrece operaciones de subida (`/upload`), listado , consulta de detalle y borrado de videos.\n    \n- `/public`: recurso al que accede el público para votar por videos publicados (`/vote`) y consultar el ranking de videos más votados (`/rankings`). También ofrece una operación para consultar los videos procesados disponibles para votación (`/videos`).",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "14601714"
+		"_exporter_id": "43585415"
 	},
 	"item": [
 		{
@@ -41,12 +41,11 @@
 					"raw": "{\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"email\": \"john@example.com\",\n  \"password1\": \"StrongPass123\",\n  \"password2\": \"StrongPass123\",\n  \"city\": \"Bogotá\",\n  \"country\": \"Colombia\"\n}"
 				},
 				"url": {
-					"raw": "{{base_url}}/api/auth/signup",
+					"raw": "{{base_url}}/auth/signup",
 					"host": [
 						"{{base_url}}"
 					],
 					"path": [
-						"api",
 						"auth",
 						"signup"
 					]
@@ -92,12 +91,11 @@
 					"raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"StrongPass123\"\n}"
 				},
 				"url": {
-					"raw": "{{base_url}}/api/auth/login",
+					"raw": "{{base_url}}/auth/login",
 					"host": [
 						"{{base_url}}"
 					],
 					"path": [
-						"api",
 						"auth",
 						"login"
 					]
@@ -153,13 +151,13 @@
 					]
 				},
 				"url": {
-					"raw": "{{base_url}}/videos/",
+					"raw": "{{base_url}}/videos/upload",
 					"host": [
 						"{{base_url}}"
 					],
 					"path": [
 						"videos",
-						""
+						"upload"
 					]
 				},
 				"description": "Permite a los usuarios autenticados subir un video a la plataforma, iniciando su procesamiento asíncrono para su posterior publicación y visualización.\n\nSeguridad:\n\n- Requiere token JWT válido en el header `Authorization`.\n    \n\n```\nAuthorization: Bearer eyJhbGciOiJIUzI1NiIs...\n\n ```\n\nValidaciones / reglas:\n\n- Valida que se suba un solo archivo de video y que sea de extensión mp4.\n    \n- Valida el tamaño máximo de archivos de 100 MB.\n    \n- Guarda el archivo en el storage y lo programa para el posterior procesamiento por parte del worker.\n    \n\nParámetros:\n\n``` json\n{\n  \"email\": \"user@example.com\",\n  \"password\": \"MyS3cretP@ssw0rd\"\n}\n\n ```\n\nCódigos de respuesta:\n\n- `201` - Video subido correctamente. Procesamiento en curso.\n    \n- `400` - No se proporcionó archivo de video.\n    \n- `400` - El archivo debe ser MP4.\n    \n- `400` - El archivo excede el límite de 100MB.\n    \n- `401 -` Falta de autenticación.\n    \n- `500` - Error al guardar archivo: .\n    \n\nCuerpo de la respuesta:\n\nCódigo `201`:\n\n``` json\n{\n  \"message\": \"Video subido correctamente. Procesamiento en curso.\",\n  \"task_id\": 1\n}\n\n ```\n\nCódigos `400`, `500`:\n\n``` json\n{\n  \"message\": \"Mensaje.\"\n}\n\n ```"
@@ -194,13 +192,13 @@
 					}
 				],
 				"url": {
-					"raw": "{{base_url}}/api/videos",
+					"raw": "{{base_url}}/videos/",
 					"host": [
 						"{{base_url}}"
 					],
 					"path": [
-						"api",
-						"videos"
+						"videos",
+						""
 					]
 				},
 				"description": "Retorna una lista de todos los videos subidos por el usuario autenticado.\n\nSeguridad:\n\n- Requiere token JWT válido en el header `Authorization`.\n    \n\n```\nAuthorization: Bearer eyJhbGciOiJIUzI1NiIs...\n\n ```\n\nValidaciones / reglas:\n\n- Solo retorna los videos publicados por el usuario en cualquier estado.\n    \n\nParámetros:\n\n- No tiene parámetros.\n    \n\nCódigos de respuesta:\n\n- `200` - Lista de videos obtenida.\n    \n- `401` - Falta de autenticación.\n    \n\nCuerpo de la respuesta:\n\nCódigo `200`:\n\n``` json\n[\n  {\n    \"video_id\": \"123456\",\n    \"title\": \"Mi mejor tiro de 3\",\n    \"status\": \"processed\",\n    \"uploaded_at\": \"2025-03-10T14:30:00Z\",\n    \"processed_at\": \"2025-03-10T14:35:00Z\",\n    \"processed_url\": \"https://anb.com/videos/processed/123456.mp4\"\n  },\n  {\n    \"video_id\": \"654321\",\n    \"title\": \"Habilidades de dribleo\",\n    \"status\": \"uploaded\",\n    \"uploaded_at\": \"2025-03-11T10:15:00Z\"\n  }\n]\n\n ```\n\nCódigo `401`:\n\n``` json\n{\n  \"message\": \"Falta de autenticación.\"\n}\n\n ```"
@@ -237,12 +235,11 @@
 					}
 				],
 				"url": {
-					"raw": "{{base_url}}/api/videos/{{video_id}}",
+					"raw": "{{base_url}}/videos/{{video_id}}",
 					"host": [
 						"{{base_url}}"
 					],
 					"path": [
-						"api",
 						"videos",
 						"{{video_id}}"
 					]
@@ -281,12 +278,11 @@
 					}
 				],
 				"url": {
-					"raw": "{{base_url}}/api/videos/{{video_id}}",
+					"raw": "{{base_url}}/videos/{{video_id}}",
 					"host": [
 						"{{base_url}}"
 					],
 					"path": [
-						"api",
 						"videos",
 						"{{video_id}}"
 					]
@@ -318,12 +314,11 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{base_url}}/api/public/videos",
+					"raw": "{{base_url}}/public/videos",
 					"host": [
 						"{{base_url}}"
 					],
 					"path": [
-						"api",
 						"public",
 						"videos"
 					]
@@ -360,12 +355,11 @@
 					}
 				],
 				"url": {
-					"raw": "{{base_url}}/api/public/videos/{{video_id}}/vote",
+					"raw": "{{base_url}}/public/videos/{{video_id}}/vote",
 					"host": [
 						"{{base_url}}"
 					],
 					"path": [
-						"api",
 						"public",
 						"videos",
 						"{{video_id}}",
@@ -399,12 +393,11 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{base_url}}/api/public/rankings",
+					"raw": "{{base_url}}/public/rankings",
 					"host": [
 						"{{base_url}}"
 					],
 					"path": [
-						"api",
 						"public",
 						"rankings"
 					]
