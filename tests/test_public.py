@@ -7,10 +7,10 @@ import uuid
 from unittest.mock import patch
 
 from app.main import app
-from app.core.database import Base, get_db
-from app.models.user import User
-from app.models.video import Video, VideoStatus
-from app.models.vote import Vote
+from shared.db.config import Base, get_db
+from shared.db.models.user import User
+from shared.db.models.video import Video, VideoStatus
+from shared.db.models.vote import Vote
 from app.core.security import get_password_hash
 
 # Configuración de base de datos de prueba
@@ -197,7 +197,7 @@ def test_vote_for_video_already_voted(test_data):
     with patch("app.api.public.verify_token", return_value=user['email']):
         response = client.post(f"/api/public/videos/{video.id}/vote", headers={"Authorization": "Bearer faketoken"})
         assert response.status_code == 400
-        assert response.json() == "Ya has votado por este video"
+        assert response.json()["message"] == "Ya has votado por este video"
 
 
 def test_vote_for_video_not_found(test_data):
@@ -207,14 +207,14 @@ def test_vote_for_video_not_found(test_data):
     with patch("app.api.public.verify_token", return_value=user['email']):
         response = client.post(f"/api/public/videos/{fake_video_id}/vote", headers={"Authorization": "Bearer faketoken"})
         assert response.status_code == 404
-        assert response.json() == "Video no encontrado o aún no está disponible públicamente"
+        assert response.json()["message"] == "Video no encontrado o aún no está disponible públicamente"
 
 
 def test_vote_for_video_unauthorized(test_data):
     with patch("app.api.public.verify_token", return_value="noexiste@example.com"):
         response = client.post(f"/api/public/videos/{test_data['videos'][0].id}/vote", headers={"Authorization": "Bearer faketoken"})
         assert response.status_code == 401
-        assert response.json() == "Usuario no autorizado"
+        assert response.json()["message"] == "Usuario no autorizado"
 
 
 def test_get_rankings_no_filter(test_data):
