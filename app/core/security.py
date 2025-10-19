@@ -5,7 +5,7 @@ from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-from .config import settings
+from shared.config.settings import settings
 
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
@@ -40,10 +40,10 @@ def verify_token(token: str = Depends(oauth2_scheme)):
         user_email: str = payload.get('sub')
         if user_email is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                                detail='Credenciales de autenticación inválidas.',
+                                detail={'message': 'Credenciales de autenticación inválidas.'},
                                 headers={'WWW-Authenticate': 'Bearer'})
         return user_email
     except JWTError as ex:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail='Credenciales de autenticación inválidas.',
+                            detail={'message': 'Credenciales de autenticación inválidas.'},
                             headers={'WWW-Authenticate': 'Bearer'})

@@ -1,24 +1,19 @@
-from celery import Celery
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security.http import HTTPAuthorizationCredentials, HTTPBearer
 from starlette.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 from fastapi import Query
-import uuid
-import datetime
-import os
-import shutil
 import logging
 
-logger = logging.getLogger(__name__)
-
 from ..core.security import verify_token
-from ..core.config import settings
-from ..core.database import get_db
-from ..models.user import User
-from ..models.video import Video, VideoStatus
-from ..models.vote import Vote
+
+from shared.db.config import get_db
+from shared.db.models.user import User
+from shared.db.models.video import Video, VideoStatus
+from shared.db.models.vote import Vote
+
+logger = logging.getLogger(__name__)
 
 router_public = APIRouter()
 bearer = HTTPBearer()
@@ -56,19 +51,19 @@ def vote_for_video(
     user = db.query(User).filter(User.email == user_email).first()
 
     if not user:
-        raise HTTPException(status_code=401, detail="Usuario no autorizado")
+        raise HTTPException(status_code=401, detail={"message": "Usuario no autorizado"})
 
     # Verificar existencia del video y que esté procesado
     video = db.query(Video).filter(Video.id == video_id, Video.status == VideoStatus.PROCESSED.value).first()
 
     if not video:
-        raise HTTPException(status_code=404, detail="Video no encontrado o aún no está disponible públicamente")
+        raise HTTPException(status_code=404, detail={"message": "Video no encontrado o aún no está disponible públicamente"})
 
     # Verificar si ya votó por ese video
     existing_vote = db.query(Vote).filter(Vote.id_user == user.id, Vote.id_video == video_id).first()
 
     if existing_vote:
-        raise HTTPException(status_code=400, detail="Ya has votado por este video")
+        raise HTTPException(status_code=400, detail={"message": "Ya has votado por este video"})
 
     # Crear voto
     new_vote = Vote(id_user=user.id, id_video=video_id)
@@ -80,7 +75,7 @@ def vote_for_video(
         db.commit()
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=400, detail="Error al registrar el voto")
+        raise HTTPException(status_code=400, detail={"message": "Error al registrar el voto"})
 
     return JSONResponse(status_code=200,
                         content={'message': "Voto registrado exitosamente."})
