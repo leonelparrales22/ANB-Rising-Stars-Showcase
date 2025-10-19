@@ -39,7 +39,7 @@ class Video(Base):
 
     # Timestamps
     uploaded_at = Column(
-        DateTime, default=datetime.datetime.now(datetime.UTC), nullable=False
+        DateTime, default=datetime.datetime.now(datetime.timezone.utc), nullable=False
     )
     processing_started_at = Column(DateTime)
     processed_at = Column(DateTime)

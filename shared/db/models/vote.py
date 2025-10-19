@@ -22,7 +22,7 @@ class Vote(Base):
         nullable=False,
     )
     voted_at = Column(
-        DateTime, default=datetime.datetime.now(datetime.UTC), nullable=False
+        DateTime, default=datetime.datetime.now(datetime.timezone.utc), nullable=False
     )
 
     # Relaciones
