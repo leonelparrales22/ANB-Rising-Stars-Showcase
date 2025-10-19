@@ -3,13 +3,13 @@ import os
 import structlog
 from datetime import datetime
 from worker.celery_app import celery_app
-from shared.database import get_db
-from shared.config import settings
-import sys
-sys.path.append('/app')
-from app.models.video import Video, VideoStatus
-from app.models.user import User
-from app.models.vote import Vote
+
+from shared.db.config import get_db
+from shared.config.settings import settings
+
+from shared.db.models.video import Video, VideoStatus
+from shared.db.models.user import User
+from shared.db.models.vote import Vote
 
 logger = structlog.get_logger()
 

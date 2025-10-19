@@ -1,7 +1,7 @@
-from .core.database import engine, Base
-from .models.user import User
-from .models.video import Video
-from .models.vote import Vote
+from shared.db.config import engine, Base
+from shared.db.models.user import User
+from shared.db.models.video import Video
+from shared.db.models.vote import Vote
 
 
 def init_db():

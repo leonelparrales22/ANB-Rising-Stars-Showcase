@@ -1,6 +1,7 @@
 from celery import Celery
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from fastapi.security.http import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.encoders import jsonable_encoder
 from starlette.responses import JSONResponse
 from sqlalchemy.orm import Session
 import uuid
@@ -9,14 +10,15 @@ import os
 import shutil
 import logging
 
-logger = logging.getLogger(__name__)
-
 from ..core.security import verify_token
-from ..core.config import settings
-from ..core.database import get_db
-from ..models.user import User
-from ..models.video import Video, VideoStatus
-from ..models.vote import Vote
+
+
+from shared.db.config import get_db
+from shared.db.models.user import User
+from shared.db.models.video import Video, VideoStatus
+from shared.db.models.vote import Vote
+
+logger = logging.getLogger(__name__)
 
 router_videos = APIRouter()
 
@@ -28,61 +30,69 @@ def upload_video(
     title: str = Form(..., min_length=1, max_length=255),
     video_file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    auth: HTTPAuthorizationCredentials = Depends(bearer)
+    auth: HTTPAuthorizationCredentials = Depends(bearer),
 ):
     """
     Subir un video con validaciones:
     - video_file: Archivo MP4, máximo 100MB
     - title: Título descriptivo del video
     """
-    
+
     # Autenticación
     user_email = verify_token(auth.credentials)
     user = db.query(User).filter(User.email == user_email).first()
-    
+
     # Validaciones del archivo
     if not video_file.filename:
-        raise HTTPException(status_code=400, detail="No se proporcionó archivo de video")
-    
-    if not video_file.filename.lower().endswith('.mp4'):
-        raise HTTPException(status_code=400, detail="El archivo debe ser MP4")
-    
+        raise HTTPException(
+            status_code=400, detail={"message": "No se proporcionó archivo de video"}
+        )
+
+    if not video_file.filename.lower().endswith(".mp4"):
+        raise HTTPException(
+            status_code=400, detail={"message": "El archivo debe ser MP4"}
+        )
+
     # Verificar tamaño del archivo (100MB máximo)
     file_size = 0
     content = video_file.file.read()
     file_size = len(content)
     video_file.file.seek(0)  # Resetear posición del archivo
-    
+
     if file_size > 100 * 1024 * 1024:  # 100MB en bytes
-        raise HTTPException(status_code=400, detail="El archivo excede el límite de 100MB")
-    
+        raise HTTPException(
+            status_code=400, detail={"message": "El archivo excede el límite de 100MB"}
+        )
+
     # Crear directorio de uploads si no existe
     upload_dir = "uploads"
     os.makedirs(upload_dir, exist_ok=True)
-    
+
     # Generar nombre único para el archivo
     video_id = str(uuid.uuid4())
     filename = f"{video_id}.mp4"
     file_path = os.path.join(upload_dir, filename)
-    
+
     # Guardar archivo
     try:
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(video_file.file, buffer)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al guardar archivo: {str(e)}")
-    
+        raise HTTPException(
+            status_code=500, detail={"message": f"Error al guardar archivo: {str(e)}"}
+        )
+
     # Crear registro en base de datos
     video_new = Video(
         id=video_id,
         title=title,
         status=VideoStatus.UPLOADED.value,
         id_user=user.id,
-        uploaded_at=datetime.datetime.now(datetime.UTC),
+        uploaded_at=datetime.datetime.now(datetime.timezone.utc),
         file_original_url=file_path,
-        file_size_bytes=file_size
+        file_size_bytes=file_size,
     )
-    
+
     try:
         db.add(video_new)
         db.commit()
@@ -92,79 +102,210 @@ def upload_video(
         # Limpiar archivo si falla la BD
         if os.path.exists(file_path):
             os.remove(file_path)
-        raise HTTPException(status_code=500, detail=f"Error al guardar en base de datos: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail={"message": f"Error al guardar en base de datos: {str(e)}"},
+        )
 
     # Enviar mensaje a cola 'uploaded-videos' con Celery
     try:
         # Configuración de Celery
         celery_app = Celery(
-            'video_processor',
-            broker='amqp://admin:admin@rabbitmq:5672//'
+            "video_processor", broker="amqp://admin:admin@rabbitmq:5672//"
         )
-        
+
         # Enviar tarea a la cola
         task = celery_app.send_task(
-            'worker.tasks.video_processing.process_video_task',
+            "worker.tasks.video_processing.process_video_task",
             args=[video_new.id],
-            queue='uploaded-videos'
+            queue="uploaded-videos",
         )
-        
+
         # Actualizar video con task_id
         video_new.celery_task_id = task.id
         video_new.status = VideoStatus.PROCESSING.value
-        video_new.processing_started_at = datetime.datetime.now(datetime.UTC)
+        video_new.processing_started_at = datetime.datetime.now(datetime.timezone.utc)
         db.commit()
-        
+
         task_id = task.id
-        
+
     except Exception as e:
         logger.error(f"Error enviando tarea a Celery: {str(e)}")
         task_id = "error-celery"
-    
+
     return JSONResponse(
         status_code=201,
         content={
             "message": "Video subido correctamente. Procesamiento en curso.",
-            "task_id": task_id
-        }
+            "task_id": task_id,
+        },
     )
 
 
-@router_videos.delete('/{id_video}', response_class=JSONResponse)
-def get_entity(id_video: str,
-               db: Session = Depends(get_db),
-               auth: HTTPAuthorizationCredentials = Depends(bearer)):
+@router_videos.get("/", response_class=JSONResponse)
+def get_videos(
+    db: Session = Depends(get_db), auth: HTTPAuthorizationCredentials = Depends(bearer)
+):
+    """
+    Obtener todos los videos del usuario autenticado
+    """
 
+    # Autenticación
     user_email = verify_token(auth.credentials)
-
     user = db.query(User).filter(User.email == user_email).first()
 
-    if id_video is None or id_video == "":
-        raise HTTPException(status_code=400,
-                            detail={'message': "El video con id especificado no existe o no pertence al usuario autenticado."})
+    processed_videos = (
+        db.query(Video)
+        .filter(Video.id_user == user.id, Video.status == VideoStatus.PROCESSED.value)
+        .all()
+    )
 
-    try:
-        id_video_uuid = uuid.UUID(id_video)
-    except ValueError:
-        raise HTTPException(status_code=400,
-                            detail={'message': "El video con id especificado no existe o no pertence al usuario autenticado."})
+    not_processed_videos = (
+        db.query(Video)
+        .filter(Video.id_user == user.id, Video.status != VideoStatus.PROCESSED.value)
+        .all()
+    )
 
-    video = db.query(Video).filter(Video.id == id_video, Video.id_user == user.id).first()
+    videos = []
+    for video in processed_videos:
+        videos.append(
+            {
+                "video_id": video.id,
+                "title": video.title,
+                "status": video.status,
+                "uploaded_at": video.uploaded_at,
+                "processed_at": video.processed_at,
+                "processed_url": video.file_processed_url,
+            }
+        )
+
+    for video in not_processed_videos:
+        videos.append(
+            {
+                "video_id": video.id,
+                "title": video.title,
+                "status": video.status,
+                "uploaded_at": video.uploaded_at,
+            }
+        )
+
+    return JSONResponse(
+        status_code=200, content=jsonable_encoder(videos, exclude_none=True)
+    )
+
+
+@router_videos.get("/{id_video}", response_class=JSONResponse)
+def get_video(
+    id_video: str,
+    db: Session = Depends(get_db),
+    auth: HTTPAuthorizationCredentials = Depends(bearer),
+):
+    """
+    Obtener un video específico del usuario autenticado
+    """
+
+    # Autenticación
+    user_email = verify_token(auth.credentials)
+    user = db.query(User).filter(User.email == user_email).first()
+
+    video = (
+        db.query(Video).filter(Video.id == id_video, Video.id_user == user.id).first()
+    )
 
     if video is None:
-        raise HTTPException(status_code=404,
-                            detail={'message': "El video con id especificado no existe o no pertence al usuario autenticado."})
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "message": "El video con id especificado no existe o no pertence al usuario"
+            },
+        )
+
+    return JSONResponse(
+        status_code=200,
+        content=jsonable_encoder(
+            {
+                "video_id": video.id,
+                "title": video.title,
+                "status": video.status,
+                "uploaded_at": video.uploaded_at,
+                "processed_at": (
+                    video.processed_at
+                    if video.status == VideoStatus.PROCESSED.value
+                    else None
+                ),
+                "original_url": (
+                    video.file_original_url
+                    if video.status == VideoStatus.UPLOADED.value
+                    else None
+                ),
+                "processed_url": (
+                    video.file_processed_url
+                    if video.status == VideoStatus.PROCESSED.value
+                    else None
+                ),
+                "votes": (
+                    video.votes if video.status == VideoStatus.PROCESSED.value else None
+                ),
+            },
+            exclude_none=True,
+        ),
+    )
+
+
+@router_videos.delete("/{id_video}", response_class=JSONResponse)
+def delete_video(
+    id_video: str,
+    db: Session = Depends(get_db),
+    auth: HTTPAuthorizationCredentials = Depends(bearer),
+):
+
+    # Autenticación
+    user_email = verify_token(auth.credentials)
+    user = db.query(User).filter(User.email == user_email).first()
+
+    video = (
+        db.query(Video).filter(Video.id == id_video, Video.id_user == user.id).first()
+    )
+
+    if video is None:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "message": "El video con id especificado no existe o no pertence al usuario autenticado"
+            },
+        )
 
     if video.status == VideoStatus.PROCESSED.value:
-        raise HTTPException(status_code=400,
-                            detail={'message': "El video no puede ser eliminado porque no cumple las condiciones."})
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "message": "El video no puede ser eliminado porque no cumple las condiciones"
+            },
+        )
+
+    original_url = video.file_original_url
+    processed_url = video.file_processed_url
+
+    if os.path.exists(original_url):
+        os.remove(original_url)
+
+    if processed_url is not None and os.path.exists(processed_url):
+        os.remove(processed_url)
 
     try:
         db.delete(video)
-
         db.commit()
-    finally:
+    except Exception:
         db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "Error al eliminar el video"},
+        )
 
-    return JSONResponse(status_code=200,
-                        content={'message': f"El video con id {id_video} fue eliminado del sistema."})
+    return JSONResponse(
+        status_code=200,
+        content={
+            "message": "El vìdeo fue eliminado exitosamente",
+            "video_id": video.id,
+        },
+    )
