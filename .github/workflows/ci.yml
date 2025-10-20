@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: CI Pipeline with SonarQube Report
 
 on:
   pull_request:
@@ -23,6 +23,10 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Create missing __init__.py files
+        run: |
+          find app app-worker shared -type d -exec touch {}/__init__.py \; || true
+
       - name: Set environment variables
         run: |
           echo "DATABASE_URL=sqlite:///./test.db" >> $GITHUB_ENV
@@ -37,15 +41,8 @@ jobs:
 
       - name: Run unit tests with coverage
         run: |
-          export PYTHONPATH=.:app-worker
-          pytest tests/ -v --cov=app --cov-report=xml --cov-report=html
-
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: htmlcov/
-          retention-days: 30
+          export PYTHONPATH=.:app-worker:shared
+          pytest tests/ -v --cov=app --cov=app-worker --cov=shared --cov-report=xml --cov-report=html
 
   build:
     runs-on: ubuntu-latest
@@ -56,8 +53,14 @@ jobs:
 
       - name: Build Docker image
         run: |
-          cd docker
-          docker compose build api
+          # Verifica si existe el directorio docker
+          if [ -d "docker" ]; then
+            cd docker
+            docker compose build api
+          else
+            echo "⚠️ Directorio 'docker' no encontrado. Construyendo imagen manualmente..."
+            docker build -t anb-rising-stars-api .
+          fi
 
   sonar:
     runs-on: ubuntu-latest
@@ -73,22 +76,45 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Set environment variables
+      - name: Create missing __init__.py files
         run: |
-          echo "DATABASE_URL=sqlite:///./test.db" >> $GITHUB_ENV
-          echo "SECRET_KEY=test-secret-key" >> $GITHUB_ENV
+          find app app-worker shared -type d -exec touch {}/__init__.py \; || true
 
       - name: Install dependencies for coverage
         run: |
-          python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r app-worker/requirements.txt
           pip install pytest pytest-cov
 
       - name: Generate coverage report
         run: |
-          export PYTHONPATH=.:app-worker
-          pytest tests/ -v --cov=app --cov=shared --cov-report=xml --cov-report=html --cov-fail-under=0
+          export PYTHONPATH=.:app-worker:shared
+          pytest tests/ -v --cov=app --cov=app-worker --cov=shared --cov-report=xml --cov-report=html
+          
+          # Reparar rutas en coverage.xml
+          python -c "
+          import xml.etree.ElementTree as ET
+          import os
+          
+          tree = ET.parse('coverage.xml')
+          root = tree.getroot()
+          
+          sources_elem = root.find('sources')
+          if sources_elem is not None:
+              root.remove(sources_elem)
+          
+          new_sources = ET.SubElement(root, 'sources')
+          ET.SubElement(new_sources, 'source').text = os.getcwd()
+          
+          for package in root.findall('.//package'):
+              for cls in package.findall('.//class'):
+                  filename = cls.get('filename')
+                  if filename and filename.startswith('/home/runner/work/ANB-Rising-Stars-Showcase/'):
+                      relative_path = filename.replace('/home/runner/work/ANB-Rising-Stars-Showcase/', '')
+                      cls.set('filename', relative_path)
+          
+          tree.write('coverage.xml', encoding='utf-8', xml_declaration=True)
+          "
 
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@v2
@@ -99,12 +125,69 @@ jobs:
           args: >
             -Dsonar.projectKey=leonelparrales22_ANB-Rising-Stars-Showcase
             -Dsonar.organization=leonelparrales22
-            -Dsonar.sources=app/,shared/
-            -Dsonar.tests=tests/
+            -Dsonar.sources=app,app-worker,shared
+            -Dsonar.tests=tests
             -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.python.coverage.plugin=pytest
             -Dsonar.python.version=3.11
-            -Dsonar.coverage.exclusions=tests/**,**/__pycache__/**
-            ${{ github.ref_name == 'main' && '-Dsonar.leakPeriod=previous_version' || '-Dsonar.newCode.referenceBranch=main' }}
-            ${{ github.event_name == 'pull_request' && format('-Dsonar.pullrequest.key={0}', github.event.number) || format('-Dsonar.branch.name={0}', github.head_ref || github.ref_name) }}
-            ${{ github.event_name == 'pull_request' && format('-Dsonar.pullrequest.branch={0}', github.head_ref) || '' }}
-            ${{ github.event_name == 'pull_request' && format('-Dsonar.pullrequest.base={0}', github.base_ref) || '' }}
+            -Dsonar.coverage.exclusions=tests/**,**/__pycache__/**,**/*.pyc,venv/**,env/**
+            -Dsonar.branch.name=${{ github.ref_name }}
+            -Dsonar.sourceEncoding=UTF-8
+
+      - name: Generate SonarQube Report
+        run: |
+          echo "# 📊 SonarQube Analysis Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          PROJECT_KEY="leonelparrales22_ANB-Rising-Stars-Showcase"
+          BRANCH="${{ github.ref_name }}"
+          
+          # Esperar un poco para que el análisis esté disponible
+          sleep 30
+          
+          # Obtener métricas
+          RESPONSE=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" \
+            "https://sonarcloud.io/api/measures/component?component=$PROJECT_KEY&branch=$BRANCH&metricKeys=bugs,vulnerabilities,code_smells,coverage,duplicated_lines_density,alert_status,sqale_rating,reliability_rating,security_rating")
+          
+          # Extraer valores
+          BUGS=$(echo $RESPONSE | grep -o '"bugs","value":"[^"]*' | cut -d'"' -f6 || echo "N/A")
+          VULNERABILITIES=$(echo $RESPONSE | grep -o '"vulnerabilities","value":"[^"]*' | cut -d'"' -f6 || echo "N/A")
+          CODE_SMELLS=$(echo $RESPONSE | grep -o '"code_smells","value":"[^"]*' | cut -d'"' -f6 || echo "N/A")
+          COVERAGE=$(echo $RESPONSE | grep -o '"coverage","value":"[^"]*' | cut -d'"' -f6 || echo "N/A")
+          DUPLICATION=$(echo $RESPONSE | grep -o '"duplicated_lines_density","value":"[^"]*' | cut -d'"' -f6 || echo "N/A")
+          QUALITY_GATE=$(echo $RESPONSE | grep -o '"alert_status","value":"[^"]*' | cut -d'"' -f6 || echo "N/A")
+          
+          # Mostrar en el summary
+          echo "## 🐛 Métricas de Calidad" >> $GITHUB_STEP_SUMMARY
+          echo "- **Bugs:** $BUGS" >> $GITHUB_STEP_SUMMARY
+          echo "- **Vulnerabilidades:** $VULNERABILITIES" >> $GITHUB_STEP_SUMMARY
+          echo "- **Code Smells:** $CODE_SMELLS" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## 🧪 Cobertura de Pruebas" >> $GITHUB_STEP_SUMMARY
+          echo "- **Cobertura:** $COVERAGE%" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## 📋 Duplicación de Código" >> $GITHUB_STEP_SUMMARY
+          echo "- **Código Duplicado:** $DUPLICATION%" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## 🚦 Quality Gate" >> $GITHUB_STEP_SUMMARY
+          if [ "$QUALITY_GATE" = "OK" ]; then
+            echo "✅ **APROBADO**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **RECHAZADO**" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## 🔗 Enlaces" >> $GITHUB_STEP_SUMMARY
+          echo "- [Ver reporte completo en SonarCloud](https://sonarcloud.io/project/overview?id=$PROJECT_KEY&branch=$BRANCH)" >> $GITHUB_STEP_SUMMARY
+          
+          # También mostrar en consola
+          echo "=== SONARQUBE REPORT ==="
+          echo "Bugs: $BUGS"
+          echo "Vulnerabilities: $VULNERABILITIES"
+          echo "Code Smells: $CODE_SMELLS"
+          echo "Coverage: $COVERAGE%"
+          echo "Duplication: $DUPLICATION%"
+          echo "Quality Gate: $QUALITY_GATE"

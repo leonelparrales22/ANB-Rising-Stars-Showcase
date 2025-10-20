@@ -1,0 +1,291 @@
+
+    <html>
+    <head>
+    <title>Reporte de Análisis del Worker</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; background-color: #f9f9f9; }
+        h1, h2 { color: #333; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 30px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: #4CAF50; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        .summary { margin-bottom: 40px; }
+        .summary p { font-size: 1.1em; }
+        .footer { font-size: 0.8em; color: #777; margin-top: 50px; text-align: center; }
+        @media (max-width: 600px) {
+            table, thead, tbody, th, td, tr { display: block; }
+            th { position: sticky; top: 0; background-color: #4CAF50; color: white; }
+            tr { margin-bottom: 15px; }
+            td { text-align: right; padding-left: 50%; position: relative; }
+            td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 10px;
+                font-weight: bold;
+                text-align: left;
+            }
+        }
+    </style>
+    </head>
+    <body>
+    <h1>Reporte: Análisis del Worker - Procesamiento de Videos</h1>
+    <div class="summary">
+        <h2>Resumen General</h2>
+        <p><strong>Total de videos procesados:</strong> 16</p>
+        <p><strong>Duración promedio total por video:</strong> 117.40 segundos</p>
+        <p><strong>Duración mínima y máxima total:</strong> 33.47s - 153.57s</p>
+    </div>
+
+    <h2>Estadísticas de Duración por Etapa (segundos)</h2>
+    <table class="dataframe table table-striped">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>count</th>
+      <th>mean</th>
+      <th>median</th>
+      <th>min</th>
+      <th>max</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Total Duration (s)</th>
+      <td>16.0</td>
+      <td>117.40</td>
+      <td>126.63</td>
+      <td>33.47</td>
+      <td>153.57</td>
+    </tr>
+    <tr>
+      <th>Trim (s)</th>
+      <td>16.0</td>
+      <td>1.18</td>
+      <td>1.09</td>
+      <td>0.18</td>
+      <td>2.57</td>
+    </tr>
+    <tr>
+      <th>Resize (s)</th>
+      <td>16.0</td>
+      <td>54.89</td>
+      <td>57.05</td>
+      <td>7.10</td>
+      <td>76.47</td>
+    </tr>
+    <tr>
+      <th>Intro/Outro (s)</th>
+      <td>16.0</td>
+      <td>61.03</td>
+      <td>68.53</td>
+      <td>19.96</td>
+      <td>81.28</td>
+    </tr>
+  </tbody>
+</table>
+
+    <h2>Resumen de Tareas por Video</h2>
+    <table class="dataframe table table-striped">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Video ID</th>
+      <th>Task ID</th>
+      <th>Output Path</th>
+      <th>Start Time</th>
+      <th>End Time</th>
+      <th>Total Duration (s)</th>
+      <th>Trim (s)</th>
+      <th>Resize (s)</th>
+      <th>Intro/Outro (s)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>fab2c86a-9417-4d08-8334-ccd81e4b7406</td>
+      <td>b4f6861f-2e39-4c80-b777-fb6954f88563</td>
+      <td>uploads/processed_fab2c86a-9417-4d08-8334-ccd81e4b7406.mp4</td>
+      <td>2025-10-19 21:03:22.633838+00:00</td>
+      <td>2025-10-19 21:04:20.288903+00:00</td>
+      <td>57.655065</td>
+      <td>0.198047</td>
+      <td>13.514997</td>
+      <td>43.855521</td>
+    </tr>
+    <tr>
+      <td>1a3cd3a5-a604-446e-81d4-2cb82c22a957</td>
+      <td>8e85bbab-498c-4ea4-b29a-4ce0e54bc542</td>
+      <td>uploads/processed_1a3cd3a5-a604-446e-81d4-2cb82c22a957.mp4</td>
+      <td>2025-10-19 21:03:39.759000+00:00</td>
+      <td>2025-10-19 21:05:37.312126+00:00</td>
+      <td>117.553126</td>
+      <td>1.259858</td>
+      <td>49.591442</td>
+      <td>66.461786</td>
+    </tr>
+    <tr>
+      <td>06cdcd6b-5236-4c4e-a246-53fc45c1283a</td>
+      <td>951ce1b5-7291-4a46-808f-70da251ed9bb</td>
+      <td>uploads/processed_06cdcd6b-5236-4c4e-a246-53fc45c1283a.mp4</td>
+      <td>2025-10-19 21:03:45.169316+00:00</td>
+      <td>2025-10-19 21:05:47.760336+00:00</td>
+      <td>122.591020</td>
+      <td>1.256765</td>
+      <td>54.124865</td>
+      <td>66.931131</td>
+    </tr>
+    <tr>
+      <td>26707434-269f-4287-b4d2-120adfc73f86</td>
+      <td>d7d64e5a-c8b7-4c30-932e-d390cc287d30</td>
+      <td>uploads/processed_26707434-269f-4287-b4d2-120adfc73f86.mp4</td>
+      <td>2025-10-19 21:03:49.529857+00:00</td>
+      <td>2025-10-19 21:05:53.075952+00:00</td>
+      <td>123.546095</td>
+      <td>0.834673</td>
+      <td>57.603010</td>
+      <td>64.451536</td>
+    </tr>
+    <tr>
+      <td>da7b55fe-b4e2-4fd9-8af8-5603a6b773bf</td>
+      <td>9799da32-b90e-4d96-b30e-c113b43629c9</td>
+      <td>uploads/processed_da7b55fe-b4e2-4fd9-8af8-5603a6b773bf.mp4</td>
+      <td>2025-10-19 21:03:53.785785+00:00</td>
+      <td>2025-10-19 21:05:53.695591+00:00</td>
+      <td>119.909806</td>
+      <td>1.801497</td>
+      <td>56.504246</td>
+      <td>60.729984</td>
+    </tr>
+    <tr>
+      <td>579f9fdb-1179-4211-8041-f90a148797a4</td>
+      <td>57d6dc71-58c2-46f4-b7e1-9033dd50e57e</td>
+      <td>uploads/processed_579f9fdb-1179-4211-8041-f90a148797a4.mp4</td>
+      <td>2025-10-20 03:22:54.253150+00:00</td>
+      <td>2025-10-20 03:23:27.725765+00:00</td>
+      <td>33.472615</td>
+      <td>0.184677</td>
+      <td>7.103391</td>
+      <td>26.138256</td>
+    </tr>
+    <tr>
+      <td>3e05cff8-074a-45d0-a4f7-deff8a48c60e</td>
+      <td>5fd790a3-b207-4035-a8b4-13619246f105</td>
+      <td>uploads/processed_3e05cff8-074a-45d0-a4f7-deff8a48c60e.mp4</td>
+      <td>2025-10-20 03:23:06.609448+00:00</td>
+      <td>2025-10-20 03:25:16.325992+00:00</td>
+      <td>129.716544</td>
+      <td>0.780242</td>
+      <td>49.060128</td>
+      <td>79.731361</td>
+    </tr>
+    <tr>
+      <td>531d4e86-2570-4c7b-8202-67b65054dae6</td>
+      <td>a05205c9-a07a-452d-9765-765a89f20f29</td>
+      <td>uploads/processed_531d4e86-2570-4c7b-8202-67b65054dae6.mp4</td>
+      <td>2025-10-20 03:23:10.061021+00:00</td>
+      <td>2025-10-20 03:25:21.952825+00:00</td>
+      <td>131.891804</td>
+      <td>0.972536</td>
+      <td>58.771710</td>
+      <td>71.798331</td>
+    </tr>
+    <tr>
+      <td>30e2252c-cc96-4543-8ad8-2926ef2f8cf4</td>
+      <td>093e343f-5383-4132-a4a4-9b8319f2c97b</td>
+      <td>uploads/processed_30e2252c-cc96-4543-8ad8-2926ef2f8cf4.mp4</td>
+      <td>2025-10-20 03:23:14.919061+00:00</td>
+      <td>2025-10-20 03:25:39.586820+00:00</td>
+      <td>144.667759</td>
+      <td>1.078549</td>
+      <td>70.074474</td>
+      <td>73.255178</td>
+    </tr>
+    <tr>
+      <td>2d1773e5-54a9-403a-82a1-04de65d8d54a</td>
+      <td>adb2504e-d6e6-4355-b77b-8c8b512c9427</td>
+      <td>uploads/processed_2d1773e5-54a9-403a-82a1-04de65d8d54a.mp4</td>
+      <td>2025-10-20 03:23:18.294857+00:00</td>
+      <td>2025-10-20 03:25:51.861326+00:00</td>
+      <td>153.566469</td>
+      <td>0.942838</td>
+      <td>73.111247</td>
+      <td>79.201280</td>
+    </tr>
+    <tr>
+      <td>3d855802-5281-487a-b6c2-b652e93a4628</td>
+      <td>918e4029-26c7-4d53-baaa-7459ea74be46</td>
+      <td>uploads/processed_3d855802-5281-487a-b6c2-b652e93a4628.mp4</td>
+      <td>2025-10-20 03:23:22.333670+00:00</td>
+      <td>2025-10-20 03:25:55.570713+00:00</td>
+      <td>153.237043</td>
+      <td>0.751415</td>
+      <td>70.550771</td>
+      <td>81.277424</td>
+    </tr>
+    <tr>
+      <td>583d7204-146f-48a7-9a33-f79d31ce2546</td>
+      <td>0f00c456-e45d-4b32-8765-1baaeaac7e61</td>
+      <td>uploads/processed_583d7204-146f-48a7-9a33-f79d31ce2546.mp4</td>
+      <td>2025-10-20 03:23:28.769962+00:00</td>
+      <td>2025-10-20 03:26:00.000803+00:00</td>
+      <td>151.230841</td>
+      <td>2.571928</td>
+      <td>70.953271</td>
+      <td>77.575403</td>
+    </tr>
+    <tr>
+      <td>28f51d3a-68da-4c9e-9883-ef1a19578ac1</td>
+      <td>15403837-d8a5-44a8-b10e-469c095df0ad</td>
+      <td>uploads/processed_28f51d3a-68da-4c9e-9883-ef1a19578ac1.mp4</td>
+      <td>2025-10-20 03:23:32.801689+00:00</td>
+      <td>2025-10-20 03:26:01.196708+00:00</td>
+      <td>148.395019</td>
+      <td>1.111433</td>
+      <td>72.702461</td>
+      <td>74.310287</td>
+    </tr>
+    <tr>
+      <td>ae736436-b1e6-49b9-8915-0ad44e9bab7f</td>
+      <td>cb74f60e-77bb-4adb-b20c-f488d55a125c</td>
+      <td>uploads/processed_ae736436-b1e6-49b9-8915-0ad44e9bab7f.mp4</td>
+      <td>2025-10-20 03:23:37.582883+00:00</td>
+      <td>2025-10-20 03:26:05.976365+00:00</td>
+      <td>148.393482</td>
+      <td>1.396311</td>
+      <td>76.473607</td>
+      <td>70.129218</td>
+    </tr>
+    <tr>
+      <td>17a3bf29-68d6-424d-8c1d-57a680d37cb1</td>
+      <td>464a3c5a-e33c-4eed-a45e-14a518a6e14c</td>
+      <td>uploads/processed_17a3bf29-68d6-424d-8c1d-57a680d37cb1.mp4</td>
+      <td>2025-10-20 03:25:16.345415+00:00</td>
+      <td>2025-10-20 03:26:30.044033+00:00</td>
+      <td>73.698618</td>
+      <td>1.674537</td>
+      <td>51.343790</td>
+      <td>20.651181</td>
+    </tr>
+    <tr>
+      <td>7fdb29bd-d08d-4799-bbe0-ca20d2568385</td>
+      <td>2db84565-1347-43df-91cd-8c225d4614cb</td>
+      <td>uploads/processed_7fdb29bd-d08d-4799-bbe0-ca20d2568385.mp4</td>
+      <td>2025-10-20 03:25:21.982830+00:00</td>
+      <td>2025-10-20 03:26:30.822197+00:00</td>
+      <td>68.839367</td>
+      <td>2.022723</td>
+      <td>46.817095</td>
+      <td>19.956380</td>
+    </tr>
+  </tbody>
+</table>
+
+    <h2>Gráfico Interactivo: Duración de Procesamiento por Etapas</h2>
+    <div>                        <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
+        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.1.1.min.js" integrity="sha256-HUEFyfiTnZJxCxur99FjbKYTvKSzwDaD3/x5TqHpFu4=" crossorigin="anonymous"></script>                <div id="4faccf89-ac1e-4efc-aef3-82d169e39861" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("4faccf89-ac1e-4efc-aef3-82d169e39861")) {                    Plotly.newPlot(                        "4faccf89-ac1e-4efc-aef3-82d169e39861",                        [{"hovertemplate":"%{x}\u003cbr\u003e%{y:.2f} segundos\u003cbr\u003eEtapa: Trim (s)\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"#1f77b4"},"name":"Trim (s)","text":["0.20s","1.26s","1.26s","0.83s","1.80s","0.18s","0.78s","0.97s","1.08s","0.94s","0.75s","2.57s","1.11s","1.40s","1.67s","2.02s"],"x":["fab2c86a-9417-4d08-8334-ccd81e4b7406","1a3cd3a5-a604-446e-81d4-2cb82c22a957","06cdcd6b-5236-4c4e-a246-53fc45c1283a","26707434-269f-4287-b4d2-120adfc73f86","da7b55fe-b4e2-4fd9-8af8-5603a6b773bf","579f9fdb-1179-4211-8041-f90a148797a4","3e05cff8-074a-45d0-a4f7-deff8a48c60e","531d4e86-2570-4c7b-8202-67b65054dae6","30e2252c-cc96-4543-8ad8-2926ef2f8cf4","2d1773e5-54a9-403a-82a1-04de65d8d54a","3d855802-5281-487a-b6c2-b652e93a4628","583d7204-146f-48a7-9a33-f79d31ce2546","28f51d3a-68da-4c9e-9883-ef1a19578ac1","ae736436-b1e6-49b9-8915-0ad44e9bab7f","17a3bf29-68d6-424d-8c1d-57a680d37cb1","7fdb29bd-d08d-4799-bbe0-ca20d2568385"],"y":{"dtype":"f8","bdata":"pRMJpppZyT\u002faqbncYCj0P3oe3J21G\u002fQ\u002frFW7JqS16j9Kea2E7tL8P+lkqfV+o8c\u002fdeYeEr736D9R2EXRAx\u002fvP9Uiopi8QfE\u002fL6LtmLor7j+zKVd4lwvoP2BVvfxOkwRAaB8r+G3I8T+NuAA0Slf2PzwSL0\u002fnyvo\u002fou9uZYkuAEA="},"type":"bar"},{"hovertemplate":"%{x}\u003cbr\u003e%{y:.2f} segundos\u003cbr\u003eEtapa: Resize (s)\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"#2ca02c"},"name":"Resize (s)","text":["13.51s","49.59s","54.12s","57.60s","56.50s","7.10s","49.06s","58.77s","70.07s","73.11s","70.55s","70.95s","72.70s","76.47s","51.34s","46.82s"],"x":["fab2c86a-9417-4d08-8334-ccd81e4b7406","1a3cd3a5-a604-446e-81d4-2cb82c22a957","06cdcd6b-5236-4c4e-a246-53fc45c1283a","26707434-269f-4287-b4d2-120adfc73f86","da7b55fe-b4e2-4fd9-8af8-5603a6b773bf","579f9fdb-1179-4211-8041-f90a148797a4","3e05cff8-074a-45d0-a4f7-deff8a48c60e","531d4e86-2570-4c7b-8202-67b65054dae6","30e2252c-cc96-4543-8ad8-2926ef2f8cf4","2d1773e5-54a9-403a-82a1-04de65d8d54a","3d855802-5281-487a-b6c2-b652e93a4628","583d7204-146f-48a7-9a33-f79d31ce2546","28f51d3a-68da-4c9e-9883-ef1a19578ac1","ae736436-b1e6-49b9-8915-0ad44e9bab7f","17a3bf29-68d6-424d-8c1d-57a680d37cb1","7fdb29bd-d08d-4799-bbe0-ca20d2568385"],"y":{"dtype":"f8","bdata":"gxPRr60HK0CMvRdftMtIQCC1iZP7D0tAmpSCbi\u002fNTEDFkQcii0BMQI7NjlTfaRxAdck4RrKHSECC\u002f61kx2JNQL+ZmC7EhFFAzbG8qx5HUkB0JQLVP6NRQGpOXmQCvVFAym37HvUsUkAHCryTTx5TQI5Yi08BrElA0VynkZZoR0A="},"type":"bar"},{"hovertemplate":"%{x}\u003cbr\u003e%{y:.2f} segundos\u003cbr\u003eEtapa: Intro\u002fOutro (s)\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"#ff7f0e"},"name":"Intro\u002fOutro (s)","text":["43.86s","66.46s","66.93s","64.45s","60.73s","26.14s","79.73s","71.80s","73.26s","79.20s","81.28s","77.58s","74.31s","70.13s","20.65s","19.96s"],"x":["fab2c86a-9417-4d08-8334-ccd81e4b7406","1a3cd3a5-a604-446e-81d4-2cb82c22a957","06cdcd6b-5236-4c4e-a246-53fc45c1283a","26707434-269f-4287-b4d2-120adfc73f86","da7b55fe-b4e2-4fd9-8af8-5603a6b773bf","579f9fdb-1179-4211-8041-f90a148797a4","3e05cff8-074a-45d0-a4f7-deff8a48c60e","531d4e86-2570-4c7b-8202-67b65054dae6","30e2252c-cc96-4543-8ad8-2926ef2f8cf4","2d1773e5-54a9-403a-82a1-04de65d8d54a","3d855802-5281-487a-b6c2-b652e93a4628","583d7204-146f-48a7-9a33-f79d31ce2546","28f51d3a-68da-4c9e-9883-ef1a19578ac1","ae736436-b1e6-49b9-8915-0ad44e9bab7f","17a3bf29-68d6-424d-8c1d-57a680d37cb1","7fdb29bd-d08d-4799-bbe0-ca20d2568385"],"y":{"dtype":"f8","bdata":"RwVOtoHtRUAL8N3mjZ1QQKxSeqaXu1BA3j1A9+UcUEA4TZ8dcF1OQMx5xr5kIzpAeSRens7uU0CDGOjaF\u002fNRQCgqG9ZUUFJAsFWCxeHMU0AIyJdQwVFUQEzBGmfTZFNA71cBvtuTUkB9A5MbRYhRQM7GSsyzpjRAaYzWUdX0M0A="},"type":"bar"}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"contour"}],"heatmap":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2d"}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermapbox"}],"scattermap":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermap"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]],"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]},"colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"white","showlakes":true,"showland":true,"subunitcolor":"#C8D4E3"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"angularaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""},"bgcolor":"white","radialaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""}},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"yaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"zaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"ternary":{"aaxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"baxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"bgcolor":"white","caxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2},"yaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2}}},"barmode":"stack","title":{"text":"Duraci\u00f3n de Procesamiento por Etapas de Video"},"xaxis":{"title":{"text":"Video ID"}},"yaxis":{"title":{"text":"Duraci\u00f3n (segundos)"}},"legend":{"title":{"text":"Etapas"}},"hovermode":"x unified"},                        {"responsive": true}                    )                };            </script>        </div>
+
+    <div class="footer">
+        Reporte generado automáticamente el 2025-10-20 03:27:42 UTC
+    </div>
+    </body>
+    </html>
+    
