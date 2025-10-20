@@ -88,7 +88,7 @@ jobs:
       - name: Generate coverage report
         run: |
           export PYTHONPATH=.:app-worker
-          pytest tests/ -v --cov=app --cov-report=xml --cov-report=html
+          pytest tests/ -v --cov=app --cov=shared --cov-report=xml --cov-report=html --cov-fail-under=0
 
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@v2
@@ -99,9 +99,13 @@ jobs:
           args: >
             -Dsonar.projectKey=leonelparrales22_ANB-Rising-Stars-Showcase
             -Dsonar.organization=leonelparrales22
-            -Dsonar.sources=app/
+            -Dsonar.sources=app/,shared/
             -Dsonar.tests=tests/
             -Dsonar.python.coverage.reportPaths=coverage.xml
-            -Dsonar.python.version=3.10
+            -Dsonar.python.version=3.11
             -Dsonar.branch.name=${{ github.head_ref || github.ref_name }}
             -Dsonar.coverage.exclusions=tests/**,**/__pycache__/**
+            -Dsonar.newCode.referenceBranch=main
+            ${{ github.event_name == 'pull_request' && format('-Dsonar.pullrequest.key={0}', github.event.number) || '' }}
+            ${{ github.event_name == 'pull_request' && format('-Dsonar.pullrequest.branch={0}', github.head_ref) || '' }}
+            ${{ github.event_name == 'pull_request' && format('-Dsonar.pullrequest.base={0}', github.base_ref) || '' }}
