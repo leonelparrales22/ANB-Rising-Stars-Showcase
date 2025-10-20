@@ -81,15 +81,15 @@ jobs:
 
       - name: Generate coverage report
         run: |
-          export PYTHONPATH=.:app-worker
-          # Genera cobertura para TODO el proyecto
-          pytest tests/ -v --cov=. --cov-report=xml --cov-report=html
+          export PYTHONPATH=.:app-worker:shared
+          # Cobertura para todas las carpetas de código
+          pytest tests/ -v --cov=app --cov=app-worker --cov=shared --cov-report=xml --cov-report=html
           
-          # Verifica que el archivo se creó
+          # Verificar que el coverage.xml se generó correctamente
           echo "=== Verificando coverage.xml ==="
           ls -la coverage.xml
-          echo "=== Primeras líneas del archivo ==="
-          head -20 coverage.xml
+          echo "=== Contenido inicial del coverage.xml ==="
+          head -10 coverage.xml
 
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@v2
@@ -100,10 +100,10 @@ jobs:
           args: >
             -Dsonar.projectKey=leonelparrales22_ANB-Rising-Stars-Showcase
             -Dsonar.organization=leonelparrales22
-            -Dsonar.sources=.
-            -Dsonar.tests=tests/
+            -Dsonar.sources=app,app-worker,shared
+            -Dsonar.tests=tests
             -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.python.coverage.plugin=pytest
             -Dsonar.python.version=3.11
-            -Dsonar.coverage.exclusions=tests/**,**/__pycache__/**,**/*.pyc,venv/**,**/test_*
+            -Dsonar.coverage.exclusions=tests/**,**/__pycache__/**,**/*.pyc,venv/**,env/**
             -Dsonar.branch.name=${{ github.ref_name }}
