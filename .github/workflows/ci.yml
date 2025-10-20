@@ -37,8 +37,8 @@ jobs:
 
       - name: Run unit tests with coverage
         run: |
-          export PYTHONPATH=.:app-worker
-          pytest tests/ -v --cov=app --cov-report=xml --cov-report=html
+          export PYTHONPATH=.:app-worker:shared
+          pytest tests/ -v --cov=app --cov=app-worker --cov=shared --cov-report=xml --cov-report=html
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
@@ -79,14 +79,14 @@ jobs:
           pip install -r app-worker/requirements.txt
           pip install pytest pytest-cov
 
-      - name: Generate coverage report and fix paths
+      - name: Generate coverage report with proper paths
         run: |
           export PYTHONPATH=.:app-worker:shared
           
-          # Primero genera el reporte normal
+          # Generar coverage con rutas relativas desde el inicio
           pytest tests/ -v --cov=app --cov=app-worker --cov=shared --cov-report=xml --cov-report=html
           
-          # Luego repara las rutas en el coverage.xml
+          # Script mejorado para reparar rutas
           python -c "
           import xml.etree.ElementTree as ET
           import os
@@ -95,30 +95,36 @@ jobs:
           tree = ET.parse('coverage.xml')
           root = tree.getroot()
           
-          # Remover todas las fuentes existentes
-          sources = root.find('sources')
-          if sources is not None:
-              root.remove(sources)
+          # Limpiar todas las fuentes existentes
+          sources_elem = root.find('sources')
+          if sources_elem is not None:
+              root.remove(sources_elem)
           
-          # Agregar solo fuente relativa
+          # Agregar nueva fuente con directorio raíz
           new_sources = ET.SubElement(root, 'sources')
-          ET.SubElement(new_sources, 'source').text = '.'
+          ET.SubElement(new_sources, 'source').text = os.getcwd()
           
-          # Reparar las rutas en los packages
+          # Reparar rutas absolutas a relativas
           for package in root.findall('.//package'):
               for cls in package.findall('.//class'):
                   filename = cls.get('filename')
-                  if filename and filename.startswith('/home/runner/work/'):
-                      # Extraer solo la parte relativa del path
-                      relative_path = filename.split('/ANB-Rising-Stars-Showcase/')[-1]
-                      cls.set('filename', relative_path)
+                  if filename:
+                      # Convertir ruta absoluta a relativa si es necesario
+                      if filename.startswith('/home/runner/work/ANB-Rising-Stars-Showcase/'):
+                          # Extraer la parte relativa al workspace
+                          relative_path = filename.replace('/home/runner/work/ANB-Rising-Stars-Showcase/', '')
+                          cls.set('filename', relative_path)
+                      elif filename.startswith('/'):
+                          # Para otras rutas absolutas, hacerlas relativas
+                          cls.set('filename', filename.lstrip('/'))
           
           # Guardar el archivo reparado
           tree.write('coverage.xml', encoding='utf-8', xml_declaration=True)
+          print('Coverage XML reparado exitosamente')
           "
           
-          echo "=== Coverage.xml reparado ==="
-          head -25 coverage.xml
+          echo "=== Verificación del coverage.xml ==="
+          head -30 coverage.xml
 
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@v2
@@ -136,3 +142,5 @@ jobs:
             -Dsonar.python.version=3.11
             -Dsonar.coverage.exclusions=tests/**,**/__pycache__/**,**/*.pyc,venv/**,env/**
             -Dsonar.branch.name=${{ github.ref_name }}
+            -Dsonar.sourceEncoding=UTF-8
+            -Dsonar.scm.disabled=true
