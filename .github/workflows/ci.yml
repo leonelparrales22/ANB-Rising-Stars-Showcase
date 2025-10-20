@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: CI Pipeline with SonarQube Report
 
 on:
   pull_request:
@@ -23,6 +23,10 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Create missing __init__.py files
+        run: |
+          find app app-worker shared -type d -exec touch {}/__init__.py \; || true
+
       - name: Set environment variables
         run: |
           echo "DATABASE_URL=sqlite:///./test.db" >> $GITHUB_ENV
@@ -40,25 +44,6 @@ jobs:
           export PYTHONPATH=.:app-worker:shared
           pytest tests/ -v --cov=app --cov=app-worker --cov=shared --cov-report=xml --cov-report=html
 
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: htmlcov/
-          retention-days: 30
-
-  build:
-    runs-on: ubuntu-latest
-    needs: test
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build Docker image
-        run: |
-          cd docker
-          docker compose build api
-
   sonar:
     runs-on: ubuntu-latest
     needs: test
@@ -73,58 +58,45 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Create missing __init__.py files
+        run: |
+          find app app-worker shared -type d -exec touch {}/__init__.py \; || true
+
       - name: Install dependencies for coverage
         run: |
           pip install -r requirements.txt
           pip install -r app-worker/requirements.txt
           pip install pytest pytest-cov
 
-      - name: Generate coverage report with proper paths
+      - name: Generate coverage report
         run: |
           export PYTHONPATH=.:app-worker:shared
-          
-          # Generar coverage con rutas relativas desde el inicio
           pytest tests/ -v --cov=app --cov=app-worker --cov=shared --cov-report=xml --cov-report=html
           
-          # Script mejorado para reparar rutas
+          # Reparar rutas en coverage.xml
           python -c "
           import xml.etree.ElementTree as ET
           import os
           
-          # Parsear el XML
           tree = ET.parse('coverage.xml')
           root = tree.getroot()
           
-          # Limpiar todas las fuentes existentes
           sources_elem = root.find('sources')
           if sources_elem is not None:
               root.remove(sources_elem)
           
-          # Agregar nueva fuente con directorio raíz
           new_sources = ET.SubElement(root, 'sources')
           ET.SubElement(new_sources, 'source').text = os.getcwd()
           
-          # Reparar rutas absolutas a relativas
           for package in root.findall('.//package'):
               for cls in package.findall('.//class'):
                   filename = cls.get('filename')
-                  if filename:
-                      # Convertir ruta absoluta a relativa si es necesario
-                      if filename.startswith('/home/runner/work/ANB-Rising-Stars-Showcase/'):
-                          # Extraer la parte relativa al workspace
-                          relative_path = filename.replace('/home/runner/work/ANB-Rising-Stars-Showcase/', '')
-                          cls.set('filename', relative_path)
-                      elif filename.startswith('/'):
-                          # Para otras rutas absolutas, hacerlas relativas
-                          cls.set('filename', filename.lstrip('/'))
+                  if filename and filename.startswith('/home/runner/work/ANB-Rising-Stars-Showcase/'):
+                      relative_path = filename.replace('/home/runner/work/ANB-Rising-Stars-Showcase/', '')
+                      cls.set('filename', relative_path)
           
-          # Guardar el archivo reparado
           tree.write('coverage.xml', encoding='utf-8', xml_declaration=True)
-          print('Coverage XML reparado exitosamente')
           "
-          
-          echo "=== Verificación del coverage.xml ==="
-          head -30 coverage.xml
 
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@v2
@@ -143,4 +115,61 @@ jobs:
             -Dsonar.coverage.exclusions=tests/**,**/__pycache__/**,**/*.pyc,venv/**,env/**
             -Dsonar.branch.name=${{ github.ref_name }}
             -Dsonar.sourceEncoding=UTF-8
-            -Dsonar.scm.disabled=true
+
+      - name: Generate SonarQube Report
+        run: |
+          echo "# 📊 SonarQube Analysis Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          PROJECT_KEY="leonelparrales22_ANB-Rising-Stars-Showcase"
+          BRANCH="${{ github.ref_name }}"
+          
+          # Esperar un poco para que el análisis esté disponible
+          sleep 30
+          
+          # Obtener métricas
+          RESPONSE=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" \
+            "https://sonarcloud.io/api/measures/component?component=$PROJECT_KEY&branch=$BRANCH&metricKeys=bugs,vulnerabilities,code_smells,coverage,duplicated_lines_density,alert_status,sqale_rating,reliability_rating,security_rating")
+          
+          # Extraer valores
+          BUGS=$(echo $RESPONSE | grep -o '"bugs","value":"[^"]*' | cut -d'"' -f6 || echo "N/A")
+          VULNERABILITIES=$(echo $RESPONSE | grep -o '"vulnerabilities","value":"[^"]*' | cut -d'"' -f6 || echo "N/A")
+          CODE_SMELLS=$(echo $RESPONSE | grep -o '"code_smells","value":"[^"]*' | cut -d'"' -f6 || echo "N/A")
+          COVERAGE=$(echo $RESPONSE | grep -o '"coverage","value":"[^"]*' | cut -d'"' -f6 || echo "N/A")
+          DUPLICATION=$(echo $RESPONSE | grep -o '"duplicated_lines_density","value":"[^"]*' | cut -d'"' -f6 || echo "N/A")
+          QUALITY_GATE=$(echo $RESPONSE | grep -o '"alert_status","value":"[^"]*' | cut -d'"' -f6 || echo "N/A")
+          
+          # Mostrar en el summary
+          echo "## 🐛 Métricas de Calidad" >> $GITHUB_STEP_SUMMARY
+          echo "- **Bugs:** $BUGS" >> $GITHUB_STEP_SUMMARY
+          echo "- **Vulnerabilidades:** $VULNERABILITIES" >> $GITHUB_STEP_SUMMARY
+          echo "- **Code Smells:** $CODE_SMELLS" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## 🧪 Cobertura de Pruebas" >> $GITHUB_STEP_SUMMARY
+          echo "- **Cobertura:** $COVERAGE%" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## 📋 Duplicación de Código" >> $GITHUB_STEP_SUMMARY
+          echo "- **Código Duplicado:** $DUPLICATION%" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## 🚦 Quality Gate" >> $GITHUB_STEP_SUMMARY
+          if [ "$QUALITY_GATE" = "OK" ]; then
+            echo "✅ **APROBADO**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **RECHAZADO**" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## 🔗 Enlaces" >> $GITHUB_STEP_SUMMARY
+          echo "- [Ver reporte completo en SonarCloud](https://sonarcloud.io/project/overview?id=$PROJECT_KEY&branch=$BRANCH)" >> $GITHUB_STEP_SUMMARY
+          
+          # También mostrar en consola
+          echo "=== SONARQUBE REPORT ==="
+          echo "Bugs: $BUGS"
+          echo "Vulnerabilities: $VULNERABILITIES"
+          echo "Code Smells: $CODE_SMELLS"
+          echo "Coverage: $COVERAGE%"
+          echo "Duplication: $DUPLICATION%"
+          echo "Quality Gate: $QUALITY_GATE"
