@@ -104,7 +104,7 @@ jobs:
             -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.python.version=3.11
             -Dsonar.coverage.exclusions=tests/**,**/__pycache__/**
-            ${{ github.ref_name != 'main' && '-Dsonar.newCode.referenceBranch=main' || '' }}
+            ${{ github.ref_name == 'main' && '-Dsonar.leakPeriod=previous_version' || '-Dsonar.newCode.referenceBranch=main' }}
             ${{ github.event_name == 'pull_request' && format('-Dsonar.pullrequest.key={0}', github.event.number) || format('-Dsonar.branch.name={0}', github.head_ref || github.ref_name) }}
             ${{ github.event_name == 'pull_request' && format('-Dsonar.pullrequest.branch={0}', github.head_ref) || '' }}
             ${{ github.event_name == 'pull_request' && format('-Dsonar.pullrequest.base={0}', github.base_ref) || '' }}
