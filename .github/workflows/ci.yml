@@ -79,18 +79,46 @@ jobs:
           pip install -r app-worker/requirements.txt
           pip install pytest pytest-cov
 
-      - name: Generate coverage report with relative paths
+      - name: Generate coverage report and fix paths
         run: |
           export PYTHONPATH=.:app-worker:shared
-          # Genera cobertura con rutas relativas
-          cd /home/runner/work/ANB-Rising-Stars-Showcase/ANB-Rising-Stars-Showcase
-          pytest tests/ -v --cov=app --cov=app-worker --cov=shared --cov-report=xml:coverage.xml --cov-report=html
           
-          # Verificar que el coverage.xml se generó correctamente
-          echo "=== Verificando coverage.xml ==="
-          ls -la coverage.xml
-          echo "=== Contenido inicial del coverage.xml ==="
-          head -10 coverage.xml
+          # Primero genera el reporte normal
+          pytest tests/ -v --cov=app --cov=app-worker --cov=shared --cov-report=xml --cov-report=html
+          
+          # Luego repara las rutas en el coverage.xml
+          python -c "
+          import xml.etree.ElementTree as ET
+          import os
+          
+          # Parsear el XML
+          tree = ET.parse('coverage.xml')
+          root = tree.getroot()
+          
+          # Remover todas las fuentes existentes
+          sources = root.find('sources')
+          if sources is not None:
+              root.remove(sources)
+          
+          # Agregar solo fuente relativa
+          new_sources = ET.SubElement(root, 'sources')
+          ET.SubElement(new_sources, 'source').text = '.'
+          
+          # Reparar las rutas en los packages
+          for package in root.findall('.//package'):
+              for cls in package.findall('.//class'):
+                  filename = cls.get('filename')
+                  if filename and filename.startswith('/home/runner/work/'):
+                      # Extraer solo la parte relativa del path
+                      relative_path = filename.split('/ANB-Rising-Stars-Showcase/')[-1]
+                      cls.set('filename', relative_path)
+          
+          # Guardar el archivo reparado
+          tree.write('coverage.xml', encoding='utf-8', xml_declaration=True)
+          "
+          
+          echo "=== Coverage.xml reparado ==="
+          head -25 coverage.xml
 
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@v2
