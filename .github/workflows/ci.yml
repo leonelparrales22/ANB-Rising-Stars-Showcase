@@ -73,14 +73,8 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Set environment variables
-        run: |
-          echo "DATABASE_URL=sqlite:///./test.db" >> $GITHUB_ENV
-          echo "SECRET_KEY=test-secret-key" >> $GITHUB_ENV
-
       - name: Install dependencies for coverage
         run: |
-          python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r app-worker/requirements.txt
           pip install pytest pytest-cov
@@ -88,7 +82,14 @@ jobs:
       - name: Generate coverage report
         run: |
           export PYTHONPATH=.:app-worker
-          pytest tests/ -v --cov=app --cov=shared --cov-report=xml --cov-report=html --cov-fail-under=0
+          # Genera cobertura para TODO el proyecto
+          pytest tests/ -v --cov=. --cov-report=xml --cov-report=html
+          
+          # Verifica que el archivo se creó
+          echo "=== Verificando coverage.xml ==="
+          ls -la coverage.xml
+          echo "=== Primeras líneas del archivo ==="
+          head -20 coverage.xml
 
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@v2
@@ -99,12 +100,10 @@ jobs:
           args: >
             -Dsonar.projectKey=leonelparrales22_ANB-Rising-Stars-Showcase
             -Dsonar.organization=leonelparrales22
-            -Dsonar.sources=app/,shared/
+            -Dsonar.sources=.
             -Dsonar.tests=tests/
             -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.python.coverage.plugin=pytest
             -Dsonar.python.version=3.11
-            -Dsonar.coverage.exclusions=tests/**,**/__pycache__/**
-            ${{ github.ref_name == 'main' && '-Dsonar.leakPeriod=2020-01-01' || '-Dsonar.newCode.referenceBranch=main' }}
-            ${{ github.event_name == 'pull_request' && format('-Dsonar.pullrequest.key={0}', github.event.number) || format('-Dsonar.branch.name={0}', github.head_ref || github.ref_name) }}
-            ${{ github.event_name == 'pull_request' && format('-Dsonar.pullrequest.branch={0}', github.head_ref) || '' }}
-            ${{ github.event_name == 'pull_request' && format('-Dsonar.pullrequest.base={0}', github.base_ref) || '' }}
+            -Dsonar.coverage.exclusions=tests/**,**/__pycache__/**,**/*.pyc,venv/**,**/test_*
+            -Dsonar.branch.name=${{ github.ref_name }}
