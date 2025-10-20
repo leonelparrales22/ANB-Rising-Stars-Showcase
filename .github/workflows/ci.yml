@@ -79,11 +79,12 @@ jobs:
           pip install -r app-worker/requirements.txt
           pip install pytest pytest-cov
 
-      - name: Generate coverage report
+      - name: Generate coverage report with relative paths
         run: |
           export PYTHONPATH=.:app-worker:shared
-          # Cobertura para todas las carpetas de código
-          pytest tests/ -v --cov=app --cov=app-worker --cov=shared --cov-report=xml --cov-report=html
+          # Genera cobertura con rutas relativas
+          cd /home/runner/work/ANB-Rising-Stars-Showcase/ANB-Rising-Stars-Showcase
+          pytest tests/ -v --cov=app --cov=app-worker --cov=shared --cov-report=xml:coverage.xml --cov-report=html
           
           # Verificar que el coverage.xml se generó correctamente
           echo "=== Verificando coverage.xml ==="
