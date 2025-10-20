@@ -1,8 +1,9 @@
 from sqlalchemy import Column, String, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
+from shared.db.config import Base
+
 import uuid
-from ..core.database import Base
 
 
 class User(Base):

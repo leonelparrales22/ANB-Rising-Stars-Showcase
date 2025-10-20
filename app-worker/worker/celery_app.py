@@ -1,5 +1,7 @@
 from celery import Celery
 import os
+from worker.logging_config import configure_logging
+configure_logging()
 
 # Configuración de Celery
 celery_app = Celery(
@@ -23,6 +25,7 @@ celery_app.conf.update(
     task_acks_late=True,
     worker_prefetch_multiplier=1,
     worker_max_tasks_per_child=1000,
+    worker_hijack_root_logger=False
 )
 
 if __name__ == '__main__':

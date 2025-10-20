@@ -3,18 +3,17 @@ import os
 import structlog
 from datetime import datetime
 from worker.celery_app import celery_app
-from shared.database import get_db
-from shared.config import settings
-# Importar modelos desde app (evitar duplicación)
-import sys
-sys.path.append('/app')
-from app.models.video import Video, VideoStatus
-from app.models.user import User
-from app.models.vote import Vote
+
+from shared.db.config import get_db
+from shared.config.settings import settings
+
+from shared.db.models.video import Video, VideoStatus
+from shared.db.models.user import User
+from shared.db.models.vote import Vote
 
 logger = structlog.get_logger()
 
-@celery_app.task(bind=True, name='worker.tasks.video_processing.process_video_task')
+@celery_app.task(bind=True, name='worker.tasks.video_processing.process_video_task', max_retries=5, default_retry_delay=60)
 def process_video_task(self, video_id: str):
     """
     Tarea principal de procesamiento de video que ejecuta:
@@ -128,9 +127,9 @@ def process_video_task(self, video_id: str):
                 except Exception as e:
                     logger.warning("Could not clean temporary file after error", file_path=temp_file, error=str(e))
         
-        # Actualizar base de datos con error (sin reintentos por ahora)
+        # Actualizar base de datos con error
         try:
-            if db:
+            if 'db' in locals():
                 video = db.query(Video).filter(Video.id == video_id).first()
                 if video:
                     video.status = VideoStatus.FAILED.value
@@ -138,8 +137,12 @@ def process_video_task(self, video_id: str):
         except Exception as db_error:
             logger.error("Error updating database with failure status", error=str(db_error))
         
-        # No reintentos por ahora - solo marcar como fallido
-        raise exc
+        # Reintentar la tarea automáticamente con delay y límite de reintentos
+        try:
+            raise self.retry(exc=exc)
+        except self.MaxRetriesExceededError:
+            logger.error("Max retries exceeded for video processing", video_id=video_id, task_id=self.request.id)
+            raise exc
 
 
 def trim_video_to_30s(input_path: str, output_path: str) -> bool:
@@ -218,10 +221,8 @@ def add_anb_intro_outro(input_path: str, output_path: str) -> bool:
 def create_simple_intro_outro(intro_path: str, outro_path: str):
     """Crear cortinillas simples de 5 segundos (temporal)"""
     try:
-        # Crear directorio assets si no existe
         os.makedirs(settings.assets_dir, exist_ok=True)
         
-        # Crear cortinilla de 5 segundos con color sólido
         cmd_intro = [
             'ffmpeg', '-f', 'lavfi', '-i', 'color=c=blue:size=1280x720:duration=5:rate=30',
             '-f', 'lavfi', '-i', 'anullsrc=channel_layout=stereo:sample_rate=48000:duration=5',

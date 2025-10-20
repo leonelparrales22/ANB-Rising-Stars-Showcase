@@ -119,3 +119,5 @@ test.db
 # Uploads
 uploads/
 assets/
+
+scripts/

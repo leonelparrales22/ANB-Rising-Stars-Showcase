@@ -63,6 +63,7 @@ services:
     volumes:
       - ../uploads:/app/uploads
       - ../assets:/app/assets
+      - ../shared:/app/shared
 
   worker:
     build:
@@ -78,6 +79,7 @@ services:
     volumes:
       - ../uploads:/app/uploads
       - ../assets:/app/assets
+      - ../shared:/app/shared
     command: celery -A worker.celery_app worker --loglevel=info --queues=uploaded-videos
 
   nginx:

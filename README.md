@@ -6,12 +6,12 @@ Este proyecto es una aplicación web escalable para la gestión de archivos y pr
 
 - Nombre: Leonel Alexander Parrales Machuca
 - Correo Uniandes: l.parrales@uniandes.edu.co
-- Nombre: [Nombre Completo Integrante 2]
-- Correo Uniandes: [correo2@uniandes.edu.co]
-- Nombre: [Nombre Completo Integrante 3]
-- Correo Uniandes: [correo3@uniandes.edu.co]
-- Nombre: [Nombre Completo Integrante 4]
-- Correo Uniandes: [correo4@uniandes.edu.co]
+- Nombre: Danny Zamorano Vallejo
+- Correo Uniandes: d.zamorano@uniandes.edu.co
+- Nombre: Cristhian Sneider Contreras Barrera
+- Correo Uniandes: c.contrerasb@uniandes.edu.co
+- Nombre: Maycol Steven Avendaño Niño
+- Correo Uniandes: m.avendanon@uniandes.edu.co
 
 ## Descripción del Proyecto
 
@@ -93,8 +93,8 @@ docker-compose down -v
 - **POST /api/auth/login**: Autenticación y obtención de token JWT (200 on success).
 
 ### Gestión de Videos
-- **POST /api/videos/**: Subir video MP4 (máx 100MB, requiere auth, inicia procesamiento asíncrono).
-- **GET /api/videos**: Lista videos del usuario autenticado.
+- **POST /api/videos/upload**: Subir video MP4 (máx 100MB, requiere auth, inicia procesamiento asíncrono).
+- **GET /api/videos/**: Lista videos del usuario autenticado.
 - **GET /api/videos/{video_id}**: Detalle de un video específico.
 - **DELETE /api/videos/{video_id}**: Eliminar video propio (solo si no tiene votos y no está procesado).
 
@@ -192,10 +192,11 @@ Ver [capacity-planning/plan_de_pruebas.md](capacity-planning/plan_de_pruebas.md)
 ```
 ANB-Rising-Stars-Showcase/
 ├── app/                    # FastAPI (API REST)
-├── app-worker/            # Celery Workers (Procesamiento)
-├── docker/               # Configuración Docker Compose
-├── uploads/              # Videos originales y procesados
-└── assets/               # Cortinillas ANB
+├── app-worker/             # Celery Workers (Procesamiento)
+├── docker/                 # Configuración Docker Compose
+├── shared/                 # Configuración general para API, Base de Datos y Workers
+├── uploads/                # Videos originales y procesados
+└── assets/                 # Cortinillas ANB
 ```
 
 ### Flujo de Procesamiento

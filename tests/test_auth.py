@@ -3,8 +3,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from app.main import app
-from app.core.database import Base, get_db
-from app.models.user import User
+from shared.db.config import Base, get_db
+from shared.db.models.user import User
 from app.core.security import get_password_hash
 
 # Configuración de base de datos de prueba (usando SQLite en memoria para simplicidad)
