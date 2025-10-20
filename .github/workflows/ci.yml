@@ -44,6 +44,24 @@ jobs:
           export PYTHONPATH=.:app-worker:shared
           pytest tests/ -v --cov=app --cov=app-worker --cov=shared --cov-report=xml --cov-report=html
 
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          # Verifica si existe el directorio docker
+          if [ -d "docker" ]; then
+            cd docker
+            docker compose build api
+          else
+            echo "⚠️ Directorio 'docker' no encontrado. Construyendo imagen manualmente..."
+            docker build -t anb-rising-stars-api .
+          fi
+
   sonar:
     runs-on: ubuntu-latest
     needs: test
