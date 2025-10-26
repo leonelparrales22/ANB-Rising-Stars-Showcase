@@ -1,0 +1,11 @@
+services:
+  worker:
+    image: misw4204/worker-anbrss:1.0.0
+    container_name: worker
+    restart: always
+    command: celery -A worker.celery_app worker --loglevel=info --queues=uploaded-videos
+    env_file:
+      - ./.env
+    volumes:
+      - /mnt/data/uploads:/app/uploads:delegated
+      - /mnt/data/assets:/app/assets:delegated

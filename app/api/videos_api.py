@@ -66,7 +66,7 @@ def upload_video(
         )
 
     # Crear directorio de uploads si no existe
-    upload_dir = "uploads"
+    upload_dir = settings.uploads_dir
     os.makedirs(upload_dir, exist_ok=True)
 
     # Generar nombre único para el archivo
