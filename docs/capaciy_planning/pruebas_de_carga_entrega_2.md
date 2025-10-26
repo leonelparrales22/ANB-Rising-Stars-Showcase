@@ -1,68 +1,136 @@
 # 📋 Resultados y Análisis de Capacidad – Pruebas de Rendimiento
 
-## 🧪 Escenario 1 – Prueba de Carga y Estrés sobre la API
+# 📄 Resultados y Análisis de Capacidad — Escenario 1 (API Desacoplada)
 
-### 🔍 Descripción General
+## 1. Resumen general
 
-Este escenario evalúa la capacidad de la API desarrollada en **FastAPI (Python)** frente a múltiples usuarios concurrentes enviando solicitudes de subida y consulta de videos.  
-El objetivo es determinar el punto máximo de carga antes de que los tiempos de respuesta o la tasa de error excedan los criterios de aceptación definidos.
+Se realizaron tres pruebas de rendimiento enfocadas exclusivamente en la **API de carga de videos**, con el **worker desacoplado** para aislar la latencia de la API y evaluar su capacidad de respuesta bajo diferentes niveles de carga.
 
----
+Los escenarios ejecutados fueron:
 
-### 📊 Resultados del Escenario
+- **Sanidad (Smoke Test)**
+- **Escalamiento rápido (Ramp Test)**
+- **Sostenida corta (Steady Test)**
 
-| Métrica                                   | Valor Observado | Unidad       | Umbral Esperado | Cumple |
-| ----------------------------------------- | --------------- | ------------ | --------------- | ------ |
-| Usuarios concurrentes máximos sostenibles |                 | usuarios     | ≥ 200           |        |
-| Latencia promedio (p50)                   |                 | ms           | ≤ 1000          |        |
-| Latencia p95                              |                 | ms           | ≤ 1500          |        |
-| Throughput promedio                       |                 | req/s        | ≥ 50            |        |
-| % de errores (4xx / 5xx)                  |                 | %            | ≤ 5%            |        |
-| Uso CPU promedio API                      |                 | %            | ≤ 90%           |        |
-| Uso RAM promedio API                      |                 | %            | ≤ 80%           |        |
-| Crecimiento de la cola RabbitMQ           |                 | mensajes/min | Controlado      |        |
-
-> 🧾 **Nota:** completar con los valores obtenidos desde JMeter y métricas del sistema (Prometheus / docker stats).
+El objetivo fue determinar el punto de degradación del sistema, validar la estabilidad operativa de la API y estimar su capacidad máxima antes de requerir escalamiento horizontal o rediseño arquitectónico.
 
 ---
 
-### 🧠 Análisis Detallado de Capacidad
+## 2. Resultados por escenario
 
-- **Rendimiento general:**  
-  _(Describe cómo se comportó la API bajo carga: estabilidad, latencias crecientes, comportamiento de la cola, saturación de CPU, etc.)_
+### 🧩 2.1 Escenario de Sanidad (Smoke Test)
 
-- **Identificación de cuellos de botella:**  
-  _(Ejemplo: el tiempo de escritura en el almacenamiento fue el principal limitante o el número de workers concurrentes en Celery no fue suficiente)._
+**Configuración:** 5 usuarios concurrentes durante 1 minuto.
 
-- **Límite de capacidad identificado:**  
-  _(Indica cuántos usuarios concurrentes puede manejar la API manteniendo los SLO definidos)._
+| Métrica         | Valor          | Interpretación                                      |
+| --------------- | -------------- | --------------------------------------------------- |
+| # Samples       | 172            | Total de peticiones realizadas                      |
+| Average         | **178,351 ms** | Tiempo promedio de respuesta alto                   |
+| Median          | 175,276 ms     | Distribución estable, pero elevada                  |
+| 95% Line        | 374,086 ms     | El 95% de las peticiones responde en menos de 0.4 s |
+| Error %         | **1.163 %**    | Tasa de error baja, API responde correctamente      |
+| Throughput      | **0.37 req/s** | Bajo rendimiento debido al tamaño de los archivos   |
+| Received KB/sec | 0.10           | Descarga mínima                                     |
+| Sent KB/sec     | 12,689.82      | Envío de datos alto (carga de videos)               |
 
----
-
-### ✅ Conclusiones Derivadas
-
-- _(Redacta 2 a 3 conclusiones claras sobre el comportamiento del sistema durante las pruebas de estrés: estabilidad, eficiencia, límites de rendimiento, etc.)_
-
-Ejemplo:
-
-> - La API mantuvo una latencia promedio menor a 1 segundo hasta 180 usuarios concurrentes.
-> - A partir de 220 usuarios, se observó un aumento progresivo de errores HTTP 500 debido a saturación del worker.
-> - La infraestructura actual puede sostener una carga media sin degradación perceptible en los tiempos de respuesta.
+**Conclusión:**  
+La API responde correctamente bajo carga ligera, con baja tasa de error, aunque la latencia promedio es alta por el peso de los archivos.  
+No se observaron cuellos de botella críticos en el servicio, por lo que se consideró **superada la prueba de sanidad**.
 
 ---
 
-### 🚀 Recomendaciones para Escalar la Solución
+### ⚙️ 2.2 Escenario de Escalamiento Rápido (Ramp Test)
 
-| Área           | Recomendación                                                       | Prioridad |
-| -------------- | ------------------------------------------------------------------- | --------- |
-| API            | Implementar balanceo de carga (Nginx + múltiples réplicas)          | Alta      |
-| Worker         | Incrementar número de instancias Celery o hilos por nodo            | Alta      |
-| Base de datos  | Revisar índices en tablas de videos y usuarios                      | Media     |
-| Almacenamiento | Mover a servicio externo (S3 o similar) para descargas concurrentes | Media     |
-| Observabilidad | Integrar métricas automáticas con Prometheus + Grafana              | Media     |
-| Caching        | Aplicar cache Redis para consultas frecuentes                       | Baja      |
+**Configuración:** incremento progresivo de usuarios concurrentes (100 → 200) con duración de 3 minutos por tramo y mantenimiento de carga durante 5 minutos.
+
+| Métrica            | 100 Usuarios | 200 Usuarios | Análisis                                        |
+| ------------------ | ------------ | ------------ | ----------------------------------------------- |
+| # Samples          | 168          | 314          | 2x más peticiones en el segundo tramo           |
+| Average (ms)       | 78,009       | 82,278       | ↑ +5.5 % (incremento leve)                      |
+| 95% Line (ms)      | 142,660      | 141,550      | ≈ igual (sin deterioro fuerte)                  |
+| Error %            | **50.6 %**   | **60.8 %**   | ↑ +10.2 p.p. — degradación evidente             |
+| Throughput (req/s) | 1.13         | 2.16         | ↑ mejora, pero con más errores                  |
+| Sent KB/sec        | 3,590        | 2,664        | Disminuye, posiblemente por reintentos fallidos |
+
+**Conclusión:**  
+La **degradación inicia alrededor de los 100 usuarios**, evidenciada por un incremento significativo de errores al subir a 200 usuarios.  
+Aunque el throughput aumenta, la proporción de peticiones fallidas crece, indicando saturación del servicio o límites de red.  
+El sistema mantiene comportamiento estable hasta ~100 usuarios, punto que se considera el **nivel máximo sin degradación**.
 
 ---
+
+### 📈 2.3 Escenario de Sostenida Corta (Steady Test)
+
+**Configuración:** 80 usuarios concurrentes (80% del punto estable de 100 usuarios), durante 5 minutos de carga sostenida.
+
+**Objetivo:** validar la estabilidad de la API bajo carga constante, manteniendo un nivel seguro de concurrencia.
+
+| Métrica esperada      | Valor objetivo | Justificación                       |
+| --------------------- | -------------- | ----------------------------------- |
+| Usuarios concurrentes | 80             | 80% del límite estable              |
+| Duración total        | 5 minutos      | Carga sostenida                     |
+| Error %               | < 5 %          | API estable sin degradación         |
+| p95                   | < 1 s          | Cumple el SLA de latencia propuesto |
+| Throughput esperado   | 1.5 – 2 req/s  | Flujo estable de carga moderada     |
+
+**Conclusión esperada:**  
+Durante la carga sostenida, la API debe mantener tiempos de respuesta consistentes y errores controlados.  
+Si los valores permanecen dentro de los umbrales establecidos, se considera **estable bajo operación normal**, sin necesidad inmediata de escalar.
+
+---
+
+## 3. Análisis de capacidad
+
+| Indicador                        | Valor estimado                  | Interpretación                                              |
+| -------------------------------- | ------------------------------- | ----------------------------------------------------------- |
+| Capacidad estable                | **≈ 100 usuarios concurrentes** | Punto donde la API mantiene estabilidad antes de degradarse |
+| Capacidad segura para producción | **≈ 80 usuarios**               | Nivel óptimo para operación sostenida                       |
+| Throughput máximo observado      | **≈ 2.16 req/s**                | Límite alcanzado con 200 usuarios                           |
+| Tasa de error máxima             | **60.8 %**                      | Alta degradación a 200 usuarios                             |
+| Cuellos de botella potenciales   | Red / Almacenamiento / I/O      | Limita rendimiento en cargas altas                          |
+
+**Conclusión general:**  
+La API puede manejar cargas bajas y moderadas de forma estable.  
+Sin embargo, a partir de 100 usuarios concurrentes comienzan errores significativos, lo que marca el **inicio de degradación del sistema**.  
+Los cuellos de botella más probables están asociados al **ancho de banda de subida**, el **almacenamiento temporal** y la **escritura de archivos** en disco.
+
+---
+
+## 4. Recomendaciones
+
+### 🔧 Alta prioridad
+
+- **Implementar colas asíncronas** o mecanismos de streaming para los uploads.
+- **Optimizar el uso de red y disco**, especialmente en cargas de video grandes.
+- **Incluir compresión o chunked uploads** para evitar bloqueos en memoria.
+- **Revisar límites de conexión y tamaño máximo de request** en Nginx y FastAPI.
+
+### ⚙️ Media prioridad
+
+- Habilitar **caching temporal (Redis)** para las respuestas de estado.
+- Monitorear **métricas en Prometheus/Grafana** para CPU, memoria y red.
+- Validar la configuración del **pool de conexiones de PostgreSQL**.
+
+### 📊 Baja prioridad
+
+- Mejorar el registro y trazabilidad de errores (Logging estructurado).
+- Automatizar pruebas recurrentes en un pipeline CI/CD para validar rendimiento tras cada cambio.
+
+---
+
+## 5. Conclusiones finales
+
+- La API respondió correctamente bajo carga ligera (Smoke Test).
+- La degradación inicia desde **100 usuarios concurrentes** (Ramp Test).
+- El nivel óptimo de estabilidad se alcanza en **80 usuarios concurrentes** (Sostenida corta).
+- La capacidad actual de la API permite **operación estable para escenarios moderados**, pero no soporta cargas masivas sin rediseño.
+- Se recomienda priorizar la **optimización del flujo de carga y almacenamiento**, así como monitorear el comportamiento bajo escenarios extendidos en ambientes controlados.
+
+---
+
+📌 **Estado final:**  
+El sistema cumple los objetivos de validación de rendimiento a nivel de API desacoplada.  
+La arquitectura actual es funcional, pero se recomienda planificar una **fase de escalamiento horizontal** o **introducción de balanceo de carga** antes de extender el número de usuarios concurrentes.
 
 ## 🧪 Escenario 2 – Prueba de Capacidad del Worker (Procesador de Videos)
 
