@@ -4,3 +4,5 @@ structlog==25.4.0
 sqlalchemy==2.0.44
 psycopg2-binary==2.9.11
 pydantic-settings==2.1.0
+prometheus_client==0.23.1
+psutil==7.1.2

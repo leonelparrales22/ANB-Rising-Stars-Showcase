@@ -1,0 +1,131 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 0,
+  "panels": [
+    {
+      "datasource": "prometheus",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 4 },
+      "id": 1,
+      "title": "Videos Procesados por Minuto",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(increase(worker_videos_processed_total[1m]))",
+          "legendFormat": "Procesados/min"
+        }
+      ]
+    },
+    {
+      "datasource": "prometheus",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 4 },
+      "id": 2,
+      "title": "Videos Fallidos por Minuto",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(increase(worker_videos_failed_total[1m]))",
+          "legendFormat": "Fallidos/min"
+        }
+      ]
+    },
+    {
+      "datasource": "prometheus",
+      "gridPos": { "x": 0, "y": 4, "w": 24, "h": 6 },
+      "id": 3,
+      "title": "Latencia de Procesamiento (seg)",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(worker_video_processing_seconds_bucket[1m])) by (le))",
+          "legendFormat": "P50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(worker_video_processing_seconds_bucket[1m])) by (le))",
+          "legendFormat": "P95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(worker_video_processing_seconds_bucket[1m])) by (le))",
+          "legendFormat": "P99"
+        }
+      ]
+    },
+    {
+      "datasource": "prometheus",
+      "gridPos": { "x": 0, "y": 10, "w": 12, "h": 6 },
+      "id": 4,
+      "title": "CPU (%)",
+      "type": "graph",
+      "targets": [
+        { "expr": "worker_cpu_percent", "legendFormat": "CPU" }
+      ]
+    },
+    {
+      "datasource": "prometheus",
+      "gridPos": { "x": 12, "y": 10, "w": 12, "h": 6 },
+      "id": 5,
+      "title": "Memoria (%)",
+      "type": "graph",
+      "targets": [
+        { "expr": "worker_memory_percent", "legendFormat": "Memoria" }
+      ]
+    },
+    {
+      "datasource": "prometheus",
+      "gridPos": { "x": 0, "y": 16, "w": 12, "h": 6 },
+      "id": 6,
+      "title": "Disco Leído (bytes/s)",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(worker_disk_read_bytes[5s])",
+          "legendFormat": "Read"
+        }
+      ]
+    },
+    {
+      "datasource": "prometheus",
+      "gridPos": { "x": 12, "y": 16, "w": 12, "h": 6 },
+      "id": 7,
+      "title": "Disco Escrito (bytes/s)",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(worker_disk_write_bytes[5s])",
+          "legendFormat": "Write"
+        }
+      ]
+    },
+    {
+      "datasource": "prometheus",
+      "gridPos": { "x": 0, "y": 22, "w": 12, "h": 6 },
+      "id": 8,
+      "title": "Red Enviada (bytes/s)",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(worker_network_sent_bytes[5s])",
+          "legendFormat": "Sent"
+        }
+      ]
+    },
+    {
+      "datasource": "prometheus",
+      "gridPos": { "x": 12, "y": 22, "w": 12, "h": 6 },
+      "id": 9,
+      "title": "Red Recibida (bytes/s)",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(worker_network_recv_bytes[5s])",
+          "legendFormat": "Recv"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 36,
+  "style": "dark",
+  "title": "Worker Profiling Dashboard",
+  "uid": "worker-profiling-fixed",
+  "version": 3
+}
