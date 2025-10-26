@@ -6,20 +6,18 @@ services:
     ports:
       - 5672:5672
       - 15672:15672
-    environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin
+    env_file:
+      - ./.env
     volumes:
       - rabbitmq-lib:/var/lib/rabbitmq/
       - rabbitmq-log:/var/log/rabbitmq/
       - ./enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
     healthcheck:
-      test:
-        ["CMD", "curl", "-f", "http://localhost:15672/api/healthchecks/node"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: "60s"
+      timeout: "3s"
       retries: 3
-      start_period: 20s
+      start_period: "10s"
 
 volumes:
   rabbitmq-lib:
