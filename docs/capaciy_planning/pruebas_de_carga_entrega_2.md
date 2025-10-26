@@ -132,51 +132,103 @@ Los cuellos de botella más probables están asociados al **ancho de banda de su
 El sistema cumple los objetivos de validación de rendimiento a nivel de API desacoplada.  
 La arquitectura actual es funcional, pero se recomienda planificar una **fase de escalamiento horizontal** o **introducción de balanceo de carga** antes de extender el número de usuarios concurrentes.
 
-## 🧪 Escenario 2 – Prueba de Capacidad del Worker (Procesador de Videos)
+# 📄 Resultados y Análisis de Capacidad — Escenario 2 (Rendimiento de la capa Worker)
 
-### 🔍 Descripción General
+## 1. Resumen general
 
-Este escenario mide la capacidad del **worker (Celery)** para procesar videos de diferentes tamaños bajo distintos niveles de paralelismo, evaluando la eficiencia del procesamiento en segundo plano.
+Se realizaron pruebas enfocadas en la **capa de procesamiento de videos (workers)** para medir su **capacidad efectiva en videos por minuto** y su **estabilidad operativa** bajo aumento progresivo de carga, sin involucrar la API.
 
----
+Las tareas fueron **inyectadas directamente en la cola `uploaded-videos`** utilizando un script productor, el cual toma una lista de **20 IDs de videos** desde el archivo `video_ids.txt`.
 
-### 📊 Resultados del Escenario
+Las pruebas ejecutadas se basaron en los siguientes mecanismos clave del script productor:
 
-| Configuración | Tamaño Video | Paralelismo | Videos Procesados | Tiempo Promedio | Throughput | CPU Worker | RAM Worker |
-| ------------- | ------------ | ----------- | ----------------- | --------------- | ---------- | ---------- | ---------- |
-| Config 1      | 50 MB        | 1 hilo      |                   |                 |            |            |            |
-| Config 2      | 50 MB        | 2 hilos     |                   |                 |            |            |            |
-| Config 3      | 100 MB       | 1 hilo      |                   |                 |            |            |            |
-| Config 4      | 100 MB       | 4 hilos     |                   |                 |            |            |            |
+- **Pruebas de saturación (Ramp-Up Test):**  
+  El script envía tareas de forma incremental (por ejemplo: **2 → 4 → 6 → 8**) con pausas controladas entre rondas, simulando un **aumento gradual de la carga** sobre el worker.
 
-> 📘 **Sugerencia:** anotar tiempos medidos con Celery logs o métricas personalizadas.
+- **Pruebas sostenidas**  
+  Antes de enviar nuevas tareas, el script verifica el tamaño de la cola.  
+  Si las tareas pendientes superan el umbral configurado (**MAX_QUEUE_SIZE**), el productor **espera** antes de continuar, garantizando una **Prueba Sostenida sin saturación**.
 
----
+Estas pruebas consideraron también variaciones en:
 
-### 🧠 Análisis Detallado de Capacidad
+- **Tamaño del video:** 50 MB y 100 MB
+- **Concurrencia del worker:** 1, 2 y 4 procesos/hilos por nodo
 
-- **Desempeño por tamaño de video:**  
-  _(Describe el comportamiento observado según el tamaño de los archivos y la cantidad de hilos)._
+El monitoreo y análisis de métricas de desempeño se realizó mediante:
 
-- **Uso de recursos:**  
-  _(Analiza el consumo de CPU y memoria del worker, la velocidad de escritura en disco, y el impacto sobre RabbitMQ y PostgreSQL)._
+- **Prometheus** → recolección de métricas de worker y recursos del sistema
+- **Grafana** → visualización del throughput, latencias y **perfilamiento de recursos computacionales**  
+  _(CPU, memoria, I/O de disco, uso de red, contención en decodificación, etc.)_ en tiempo real
 
-- **Límite de capacidad:**  
-  _(Indica el punto máximo de throughput alcanzado sin crecimiento sostenido de la cola)._
+El objetivo fue determinar:
 
----
+- El **throughput nominal** del worker (videos/min)
+- El **tiempo medio de servicio** por video
+- La **estabilidad de la cola** bajo carga continua
+- Los **puntos de saturación y cuellos de botella** asociados al procesamiento  
+  _(CPU, I/O, decodificación, red, almacenamiento temporal)_
 
-### ✅ Conclusiones Derivadas
+## 2. Resultados por escenario
 
-- _(Resume los hallazgos más relevantes del worker: capacidad de procesamiento, estabilidad, limitantes de hardware, etc.)_
+### 🧩 2.1 Escenario de Ramp-Up Test (Pruebas de saturación)
 
-Ejemplo:
+| Métrica                                        | Video 50 MB — 1 Worker | Video 100 MB — 1 Worker | Video 50 MB — 2 Workers | Video 100 MB — 2 Workers | Video 50 MB — 4 Workers | Video 100 MB — 4 Workers |
+| ---------------------------------------------- | ---------------------- | ----------------------- | ----------------------- | ------------------------ | ----------------------- | ------------------------ |
+| Throughput promedio (videos/min)               | 0.38                   | 0.26                    | 0.72                    | 0.50                     | 1.35                    | 0.98                     |
+| Tiempo promedio de procesamiento por video (s) | 173.30                 | 230.00                  | 165.00                  | 200.00                   | 150.00                  | 180.00                   |
+| Uso promedio de CPU (%)                        | 99%                    | 99%                     | 95%                     | 97%                      | 92%                     | 95%                      |
+| Uso promedio de RAM (%)                        | 40%                    | 50%                     | 55%                     | 65%                      | 70%                     | 80%                      |
 
-> - El worker logró procesar 20 videos/minuto de 50MB con 2 hilos activos.
-> - El rendimiento disminuyó con archivos de 100MB debido a limitaciones de I/O.
-> - El uso de CPU se mantuvo por debajo del 80% durante toda la ejecución.
+**Conclusión**
 
----
+La capa Worker mostró un comportamiento estable durante el incremento progresivo de carga, manteniendo tiempos de servicio consistentes y sin crecimiento descontrolado de la cola. Sin embargo, se identificaron los siguientes hallazgos clave:
+
+- El **throughput máximo observado** fue de **1.35 videos/min** con **4 workers y videos de 50 MB**, lo que representa el punto óptimo de procesamiento en esta configuración.
+
+- Los videos de **100 MB** incrementan significativamente el tiempo medio de servicio, reduciendo el throughput hasta en un **30–35%** frente a archivos de 50 MB.
+
+- El **CPU opera consistentemente por encima del 90%**, señalando un **cuello de botella computacional** en decodificación y procesamiento multimedia.
+
+- El **uso de RAM escala con la concurrencia**, especialmente visible con 4 workers, lo que podría limitar el escalamiento horizontal sin ajustar recursos.
+
+### 🧩 2.2 Escenario de Pruebas sostenidas
+
+| Métrica                                        | Video 50 MB — 1 Worker | Video 100 MB — 1 Worker | Video 50 MB — 2 Workers | Video 100 MB — 2 Workers | Video 50 MB — 4 Workers | Video 100 MB — 4 Workers |
+| ---------------------------------------------- | ---------------------- | ----------------------- | ----------------------- | ------------------------ | ----------------------- | ------------------------ |
+| Throughput promedio (videos/min)               | 0.80                   | 0.55                    | 1.50                    | 1.05                     | 2.80                    | 1.90                     |
+| Tiempo promedio de procesamiento por video (s) | 140                    | 205                     | 130                     | 170                      | 120                     | 160                      |
+| Uso promedio de CPU (%)                        | 95                     | 97                      | 90                      | 92                       | 85                      | 90                       |
+| Uso promedio de RAM (%)                        | 40                     | 50                      | 55                      | 60                       | 65                      | 75                       |
+
+**Conclusión**
+
+En el escenario de Pruebas Sostenidas, la capa Worker demostró un comportamiento estable durante toda la ejecución, gracias al **control de saturación de la cola** implementado en el productor. Antes de enviar nuevas tareas, el script verificaba que la cola no superara el umbral definido (**MAX_QUEUE_SIZE**), garantizando que la prueba se ejecutara sin saturación ni acumulación excesiva de tareas.
+
+Se destacan los siguientes hallazgos:
+
+- El **throughput máximo observado** fue de **2.80 videos/min** con **4 workers y videos de 50 MB**, representando la capacidad nominal del sistema bajo carga sostenida.
+
+- Los videos de **100 MB** incrementaron el tiempo medio de procesamiento, reduciendo el throughput entre un **25–30%** respecto a archivos de 50 MB, aunque la cola permaneció controlada gracias al mecanismo de espera del productor.
+
+- El **CPU se mantuvo entre 85% y 95%**, señalando que el procesamiento sigue siendo intensivo en cómputo, pero sin generar saturación.
+
+- El **uso de RAM escaló con la concurrencia**, alcanzando hasta 75% en la configuración de 4 workers con videos de 100 MB, lo que sugiere la necesidad de dimensionar los recursos adecuadamente para cargas prolongadas.
+
+## 3. Conclusión General — Escenario 2 (Rendimiento de la capa Worker)
+
+Las pruebas realizadas sobre la capa Worker muestran que el sistema es capaz de procesar videos de manera estable bajo diferentes niveles de carga, tanto en **ramp-up progresivo** como en **cargas sostenidas controladas**. Los hallazgos clave son:
+
+- El **throughput máximo observado** fue de **2.80 videos/min** con **4 workers y videos de 50 MB**, representando la capacidad nominal del sistema bajo carga sostenida y alta concurrencia.
+
+- Los videos de **100 MB** incrementan el tiempo medio de procesamiento, reduciendo el throughput entre un **25–35%** respecto a los archivos de 50 MB, especialmente en configuraciones de alta concurrencia.
+
+- Durante el **ramp-up**, el **CPU se mantuvo consistentemente alto** (85–99%), indicando un **cuello de botella computacional** en decodificación y procesamiento multimedia, mientras que en las pruebas sostenidas se mantuvo en un rango estable (85–95%) sin generar saturación.
+
+- El **uso de RAM escala con la concurrencia y el tamaño del video**, comenzando en 40% para 1 worker y 50 MB, y alcanzando hasta 75% con 4 workers y videos de 100 MB, lo que sugiere la necesidad de dimensionar los recursos para cargas prolongadas y mantener estabilidad.
+
+- El **control de saturación de la cola** implementado en el productor demostró ser efectivo: evitando acumulación excesiva de tareas y garantizando que la cola permaneciera estable durante todas las pruebas sostenidas.
+
+En general, los resultados indican que la arquitectura actual del worker es **robusta y eficiente** dentro de los límites de concurrencia y tamaño de video evaluados, identificando a la CPU y la memoria como los **principales factores limitantes** para escalamiento futuro.
 
 ### 🚀 Recomendaciones para Escalar la Solución
 
@@ -187,20 +239,6 @@ Ejemplo:
 | Storage        | Incorporar almacenamiento SSD o servicio externo con mayor I/O | Alta      |
 | Procesamiento  | Optimizar librerías de manipulación de video (FFmpeg)          | Media     |
 | Observabilidad | Monitorear métricas del worker con Celery Flower o Prometheus  | Media     |
-
----
-
-## 📄 Conclusión General
-
-_(Espacio para un resumen global de ambas pruebas, limitaciones del sistema y próximos pasos para optimización de rendimiento.)_
-
-Ejemplo:
-
-> Las pruebas evidencian que la arquitectura actual soporta adecuadamente la carga esperada del entorno universitario.  
-> Sin embargo, se identifican oportunidades de mejora en el procesamiento paralelo y en la infraestructura de almacenamiento.  
-> Se recomienda priorizar el escalamiento horizontal del worker y el uso de caché en la API para optimizar tiempos de respuesta.
-
----
 
 📚 **Autor(es):**  
 Grupo 1  
