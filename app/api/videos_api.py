@@ -17,6 +17,7 @@ from shared.db.config import get_db
 from shared.db.models.user import User
 from shared.db.models.video import Video, VideoStatus
 from shared.db.models.vote import Vote
+from shared.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -105,6 +106,16 @@ def upload_video(
         raise HTTPException(
             status_code=500,
             detail={"message": f"Error al guardar en base de datos: {str(e)}"},
+        )
+
+    # Para pruebas de carga, no se envía tarea a Celery
+    if settings.environment == "testing":
+        return JSONResponse(
+            status_code=202,
+            content={
+                "message": "Video subido correctamente. Procesamiento en curso.",
+                "task_id": "test-task-id",
+            },
         )
 
     # Enviar mensaje a cola 'uploaded-videos' con Celery
