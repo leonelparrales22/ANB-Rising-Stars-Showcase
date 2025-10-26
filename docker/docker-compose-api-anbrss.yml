@@ -1,0 +1,23 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - api
+
+  api:
+    image: misw4204/api-anbrss:1.0.0
+    container_name: api
+    restart: always
+    env_file:
+      - ./.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - /mnt/data/uploads:/app/uploads:delegated
+      - /mnt/data/assets:/app/assets:delegated
