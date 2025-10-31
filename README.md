@@ -165,26 +165,40 @@ newman run collections/postman_collection.json -e collections/postman_environmen
 
 ## Documentación
 
-Toda la documentación se encuentra en `docs/Entrega_1/`:
+La documentación de la `Entrega No. 1` se encuentra en `docs/Entrega_1/`:
 
-- [Arquitectura de Software](docs/Entrega_1/arquitectura-software.md)
-- [Guía de Despliegue](docs/Entrega_1/guia-despliegue.md)
-- [Modelo de Datos (ERD)](docs/Entrega_1/modelo-datos.md)
-- [Diagramas C4](docs/Entrega_1/diagramas/)
-- [Decisiones Arquitectónicas (ADR)](docs/Entrega_1/decisiones-adr.md)
+- [Diagrama de Componentes](docs/Entrega_1/diagrama-componentes.png)
+- [Diagrama de Contenedores](docs/Entrega_1/diagrama-contenedores.png)
+- [Diagrama de Contexto](docs/Entrega_1/diagrama-contexto.png)
+- [Diagrama de Despliegue](docs/Entrega_1/diagrama-despliegue.png)
+- [Diagrama Modelo de Datos](docs/Entrega_1/diagrama-modelo-datos.png)
 - [Diagrama de Secuencia (Video)](docs/Entrega_1/diagrama-secuencia-video.md)
+- [Link Presentación Vídeo](docs/Entrega_1/link-video-presentacion-e1.txt)
+
+La documentación de la `Entrega No. 2` se encuentra en `docs/Entrega2/`:
+
+- [Diagrama de Componentes](docs/Entrega2/diagrama-componentes.png)
+- [Diagrama de Contenedores](docs/Entrega2/diagrama-containers.png)
+- [Diagrama de Contexto](docs/Entrega2/diagrama-contexto.png)
+- [Diagrama de Despliegue](docs/Entrega2/diagrama-despliegue.png)
+- [Diagrama Modelo de Datos](docs/Entrega2/diagrama-modelo-datos.png)
+- [Diagrama de Secuencia (Video)](docs/Entrega2/diagrama-secuencia-video.md)
+- [Link Presentación Vídeo](docs/Entrega2/link-video-presentacion-e2.txt)
 
 ## Sustentación
 
-Video de sustentación: [Enlace al video](sustentacion/Entrega_1/video_sustentacion.md)
+- [Entrega 1 - Vídeo Sustentación](https://drive.google.com/file/d/1E2BxHXR1p46LTX_4j90l8fgzrZB_dvYb/view?usp=sharing)
+- [Entrega 2 - Vídeo Sustentación](https://drive.google.com/file/d/1jyYzLLIPqsP13tP_F5D7CVUCnVsHxLog/view?usp=sharing)
 
 ## Plan de Pruebas de Capacidad
 
-Ver [capacity-planning/plan_de_pruebas.md](capacity-planning/plan_de_pruebas.md)
+- [Análisis de Capacidad](docs/capaciy_planning/plan_de_pruebas.md)
+- [Pruebas de Carga](docs/capaciy_planning/pruebas_de_carga_entrega_2.md)
 
 ## Releases
 
 - **v1.0.0**: Primera entrega con auth endpoints y Docker setup. [Ver release](https://github.com/leonelparrales22/ANB-Rising-Stars-Showcase/releases/tag/v1.0.0)
+- **v2.0.0**: Segunda entrega con despliegue en AWS y pruebas de carga. [Ver release](https://github.com/leonelparrales22/ANB-Rising-Stars-Showcase/releases/tag/v2.0.0)
 
 ## Arquitectura del Sistema
 
@@ -218,6 +232,7 @@ ANB-Rising-Stars-Showcase/
 - Asegúrate de que los puertos 5433, 8000, 8080, 5672, 15672, 6379 estén libres.
 - RabbitMQ Management UI disponible en `http://localhost:15672` (admin/admin).
 - Los videos se procesan automáticamente en segundo plano.
+- Los componetes API y Worker se pueden desacoplar utilizando una variable de entorno.
 
 ## Contribución
 
