@@ -253,25 +253,41 @@ def add_anb_intro_outro(input_path: str, output_path: str) -> bool:
         if not os.path.exists(intro_path) or not os.path.exists(outro_path):
             create_simple_intro_outro(intro_path, outro_path)
 
+        # Crear archivo de concatenación
+        concat_file = f"/tmp/concat_{os.path.basename(input_path)}.txt"
+        with open(concat_file, "w") as f:
+            f.write(f"file '{intro_path}'\n")
+            f.write(f"file '{input_path}'\n")
+            f.write(f"file '{outro_path}'\n")
+
+        # Concatenar usando archivo de texto
         cmd = [
             "ffmpeg",
+            "-f",
+            "concat",
+            "-safe",
+            "0",
             "-i",
-            intro_path,
-            "-i",
-            input_path,
-            "-i",
-            outro_path,
-            "-filter_complex",
-            "[0:v:0][0:a:0][1:v:0][1:a:0][2:v:0][2:a:0]concat=n=3:v=1:a=1[outv][outa]",
-            "-map",
-            "[outv]",
-            "-map",
-            "[outa]",
+            concat_file,
+            "-c",
+            "copy",
             "-y",
             output_path,
         ]
         result = subprocess.run(cmd, capture_output=True, text=True)
-        return result.returncode == 0
+
+        # Limpiar archivo temporal
+        try:
+            os.remove(concat_file)
+        except:
+            pass
+
+        if result.returncode != 0:
+            logger.error(
+                "FFmpeg concat error", stderr=result.stderr, stdout=result.stdout
+            )
+            return False
+        return True
     except Exception as e:
         logger.error("Error adding intro/outro", error=str(e), input_path=input_path)
         return False
