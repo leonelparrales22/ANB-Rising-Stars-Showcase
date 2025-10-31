@@ -24,6 +24,7 @@ La plataforma permite a jugadores aficionados registrarse, subir videos de habil
 - **Autenticación**: JWT
 - **Procesamiento Asíncrono**: Celery + RabbitMQ
 - **Procesamiento de Video**: FFmpeg
+- **Almacenamiento**: AWS S3 (configurable) / Sistema de archivos local
 - **Proxy Reverso**: NGINX
 - **Contenedorización**: Docker + Docker Compose
 - **Almacenamiento**: Sistema de archivos local (preparado para S3)
@@ -44,7 +45,7 @@ git clone https://github.com/leonelparrales22/ANB-Rising-Stars-Showcase.git
 cd ANB-Rising-Stars-Showcase
 ```
 
-### 2. Configurar Variables de Entorno
+### 3. Configurar Variables de Entorno
 
 Copia el archivo de ejemplo y edítalo:
 
@@ -53,6 +54,27 @@ cp .env.example .env
 ```
 
 Edita `.env` con tus valores (ej. credenciales de DB, SECRET_KEY).
+
+#### Configuración de Almacenamiento AWS S3
+
+Si deseas usar AWS S3 en lugar de almacenamiento local, configura estas variables en tu `.env`:
+
+```bash
+# AWS S3 Configuration
+AWS_ACCESS_KEY_ID=tu-access-key-id
+AWS_SECRET_ACCESS_KEY=tu-secret-access-key
+AWS_REGION=us-east-1
+S3_BUCKET=nombre-de-tu-bucket-s3
+```
+
+**Nota**: Si no configuras las variables de AWS, el sistema usará almacenamiento local por defecto.
+
+#### Creación de Bucket S3
+
+1. Ve a la consola de AWS S3
+2. Crea un nuevo bucket con el nombre especificado en `S3_BUCKET`
+3. Configura las políticas de IAM para permitir acceso de lectura/escritura
+4. Asegúrate de que el bucket permita acceso público para los videos procesados
 
 ### 3. Ejecutar la Aplicación
 
@@ -89,6 +111,7 @@ docker-compose down -v
 ## Endpoints Disponibles
 
 ### Autenticación
+
 - **POST /api/auth/signup**: Registro de nuevos jugadores (201 on success).
 - **POST /api/auth/login**: Autenticación y obtención de token JWT (200 on success).
 
