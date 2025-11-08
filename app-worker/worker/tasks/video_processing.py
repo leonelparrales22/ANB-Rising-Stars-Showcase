@@ -59,6 +59,8 @@ def process_video_task(self, video_id: str):
         db.commit()
 
         # Rutas de archivos usando configuración
+        os.makedirs(settings.uploads_dir, exist_ok=True)
+        
         input_path = f"{settings.uploads_dir}/temp_input_{video_id}.mp4"
         temp_path = f"{settings.uploads_dir}/temp_{video_id}.mp4"
         output_path = f"{settings.uploads_dir}/temp_processed_{video_id}.mp4"
