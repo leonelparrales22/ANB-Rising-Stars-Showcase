@@ -216,7 +216,8 @@ La documentación de la `Entrega No. 2` se encuentra en `docs/Entrega2/`:
 ## Plan de Pruebas de Capacidad
 
 - [Análisis de Capacidad](docs/capaciy_planning/plan_de_pruebas.md)
-- [Pruebas de Carga](docs/capaciy_planning/pruebas_de_carga_entrega_2.md)
+- [Pruebas de Carga - Semana 2](docs/capaciy_planning/pruebas_de_carga_entrega_2.md)
+- [Pruebas de Carga - Semana 3](docs/capaciy_planning/pruebas_de_carga_entrega_3.md)
 
 ## Releases
 
