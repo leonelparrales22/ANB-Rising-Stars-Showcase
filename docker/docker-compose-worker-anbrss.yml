@@ -6,3 +6,5 @@ services:
     command: celery -A worker.celery_app worker --loglevel=info --queues=uploaded-videos
     env_file:
       - ./.env
+    ports:
+      - "9001:9001"
