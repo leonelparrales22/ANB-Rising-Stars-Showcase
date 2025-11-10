@@ -4,14 +4,12 @@ Este proyecto es una aplicación web escalable para la gestión de archivos y pr
 
 ## Integrantes del Equipo
 
-- Nombre: Leonel Alexander Parrales Machuca
-- Correo Uniandes: l.parrales@uniandes.edu.co
-- Nombre: Danny Zamorano Vallejo
-- Correo Uniandes: d.zamorano@uniandes.edu.co
-- Nombre: Cristhian Sneider Contreras Barrera
-- Correo Uniandes: c.contrerasb@uniandes.edu.co
-- Nombre: Maycol Steven Avendaño Niño
-- Correo Uniandes: m.avendanon@uniandes.edu.co
+| Nombre                              | Email Uniandes               | Usuario GitHub    |
+| ----------------------------------- | ---------------------------- | ----------------- |
+| Leonel Alexander Parrales Machuca   | l.parrales@uniandes.edu.co   | leonelparrales22  |
+| Maycol Steven Avendaño Niño         | m.avendanon@uniandes.edu.co  | maycolan          |
+| Cristhian Sneider Contreras Barrera | c.contrerasb@uniandes.edu.co | criscont17        |
+| Danny Zamorano Vallejo              | d.zmorano@uniandes.edu.co    | dzamoranouniandes |
 
 ## Descripción del Proyecto
 
@@ -25,7 +23,7 @@ La plataforma permite a jugadores aficionados registrarse, subir videos de habil
 - **Procesamiento Asíncrono**: Celery + RabbitMQ
 - **Procesamiento de Video**: FFmpeg
 - **Almacenamiento**: AWS S3 (configurable) / Sistema de archivos local
-- **Proxy Reverso**: NGINX
+- **Proxy Reverso**: NGINX (se elimina en entrega 3 por adición de ALB)
 - **Contenedorización**: Docker + Docker Compose
 - **Almacenamiento**: Sistema de archivos local (preparado para S3)
 - **Logging**: Estructurado con video_id y task_id
@@ -208,21 +206,32 @@ La documentación de la `Entrega No. 2` se encuentra en `docs/Entrega2/`:
 - [Diagrama de Secuencia (Video)](docs/Entrega2/diagrama-secuencia-video.md)
 - [Link Presentación Vídeo](docs/Entrega2/link-video-presentacion-e2.txt)
 
+La documentación de la `Entrega No. 3` se encuentra en `docs/Entrega3/`:
+
+- [Diagrama de Contexto](docs/Entrega3/diagrama-contexto.png)
+- [Diagrama de Contenedores](docs/Entrega3/diagrama-containers.png)
+- [Diagrama de Componentes](docs/Entrega3/diagrama-componentes.png)
+- [Diagrama de Despliegue](docs/Entrega3/diagrama-despliegue.png)
+- [Diagrama Modelo de Datos](docs/Entrega3/diagrama-modelo-datos.png)
+- [Link Presentación Vídeo](docs/Entrega3/link-video-presentacion-e3.txt)
+
 ## Sustentación
 
-- [Entrega 1 - Vídeo Sustentación](https://drive.google.com/file/d/1E2BxHXR1p46LTX_4j90l8fgzrZB_dvYb/view?usp=sharing)
-- [Entrega 2 - Vídeo Sustentación](https://drive.google.com/file/d/1jyYzLLIPqsP13tP_F5D7CVUCnVsHxLog/view?usp=sharing)
+- [Entrega 1 - Video Sustentación](https://drive.google.com/file/d/1E2BxHXR1p46LTX_4j90l8fgzrZB_dvYb/view?usp=sharing)
+- [Entrega 2 - Video Sustentación](https://drive.google.com/file/d/1jyYzLLIPqsP13tP_F5D7CVUCnVsHxLog/view?usp=sharing)
+- [Entrega 3 - Video Sustentación](https://drive.google.com/file/d/17o1-KM7doMRGQbl_oAi5ZGCfvuDYhiTz/view?usp=sharing)
 
 ## Plan de Pruebas de Capacidad
 
-- [Análisis de Capacidad](docs/capaciy_planning/plan_de_pruebas.md)
-- [Pruebas de Carga - Semana 2](docs/capaciy_planning/pruebas_de_carga_entrega_2.md)
-- [Pruebas de Carga - Semana 3](docs/capaciy_planning/pruebas_de_carga_entrega_3.md)
+- [Plan de Pruebas](docs/capaciy_planning/plan_de_pruebas.md)
+- [Resultados Pruebas de Carga - Entrega 2](docs/capaciy_planning/pruebas_de_carga_entrega_2.md)
+- [Resultados Pruebas de Carga - Entrega 3](docs/capaciy_planning/pruebas_de_carga_entrega_3.md)
 
 ## Releases
 
 - **v1.0.0**: Primera entrega con auth endpoints y Docker setup. [Ver release](https://github.com/leonelparrales22/ANB-Rising-Stars-Showcase/releases/tag/v1.0.0)
 - **v2.0.0**: Segunda entrega con despliegue en AWS y pruebas de carga. [Ver release](https://github.com/leonelparrales22/ANB-Rising-Stars-Showcase/releases/tag/v2.0.0)
+- **v3.0.0**: Tercera entrega con despliegue en AWS y pruebas de carga. [Ver release](https://github.com/leonelparrales22/ANB-Rising-Stars-Showcase/releases/tag/v3.0.0)
 
 ## Arquitectura del Sistema
 
