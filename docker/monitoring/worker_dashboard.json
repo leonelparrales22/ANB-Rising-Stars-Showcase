@@ -7,45 +7,39 @@
       "datasource": "prometheus",
       "gridPos": { "x": 0, "y": 0, "w": 12, "h": 4 },
       "id": 1,
-      "title": "Videos Procesados por Minuto",
-      "type": "stat",
+      "title": "Tareas Procesadas por Minuto",
+      "type": "timeseries",
       "targets": [
-        {
-          "expr": "sum(increase(worker_videos_processed_total[1m]))",
-          "legendFormat": "Procesados/min"
-        }
+        { "expr": "increase(celery_tasks_total[1m])", "legendFormat": "Procesadas/min" }
       ]
     },
     {
       "datasource": "prometheus",
       "gridPos": { "x": 12, "y": 0, "w": 12, "h": 4 },
       "id": 2,
-      "title": "Videos Fallidos por Minuto",
+      "title": "Tareas Procesadas Totales",
       "type": "stat",
       "targets": [
-        {
-          "expr": "sum(increase(worker_videos_failed_total[1m]))",
-          "legendFormat": "Fallidos/min"
-        }
+        { "expr": "celery_tasks_total", "legendFormat": "Procesadas" }
       ]
     },
     {
       "datasource": "prometheus",
       "gridPos": { "x": 0, "y": 4, "w": 24, "h": 6 },
       "id": 3,
-      "title": "Latencia de Procesamiento (seg)",
+      "title": "Latencia de Tareas (segundos)",
       "type": "graph",
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(worker_video_processing_seconds_bucket[1m])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(celery_task_duration_seconds_bucket[1m])) by (le))",
           "legendFormat": "P50"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(worker_video_processing_seconds_bucket[1m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(celery_task_duration_seconds_bucket[1m])) by (le))",
           "legendFormat": "P95"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(worker_video_processing_seconds_bucket[1m])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(celery_task_duration_seconds_bucket[1m])) by (le))",
           "legendFormat": "P99"
         }
       ]
@@ -57,7 +51,7 @@
       "title": "CPU (%)",
       "type": "graph",
       "targets": [
-        { "expr": "worker_cpu_percent", "legendFormat": "CPU" }
+        { "expr": "celery_worker_cpu_percent", "legendFormat": "CPU" }
       ]
     },
     {
@@ -67,65 +61,33 @@
       "title": "Memoria (%)",
       "type": "graph",
       "targets": [
-        { "expr": "worker_memory_percent", "legendFormat": "Memoria" }
+        { "expr": "celery_worker_memory_percent", "legendFormat": "Memoria" }
       ]
     },
     {
       "datasource": "prometheus",
       "gridPos": { "x": 0, "y": 16, "w": 12, "h": 6 },
       "id": 6,
-      "title": "Disco Leído (bytes/s)",
+      "title": "Bytes Leídos (B/s)",
       "type": "graph",
       "targets": [
-        {
-          "expr": "rate(worker_disk_read_bytes[5s])",
-          "legendFormat": "Read"
-        }
+        { "expr": "rate(celery_worker_io_read_bytes[5s])", "legendFormat": "Read" }
       ]
     },
     {
       "datasource": "prometheus",
       "gridPos": { "x": 12, "y": 16, "w": 12, "h": 6 },
       "id": 7,
-      "title": "Disco Escrito (bytes/s)",
+      "title": "Bytes Escritos (B/s)",
       "type": "graph",
       "targets": [
-        {
-          "expr": "rate(worker_disk_write_bytes[5s])",
-          "legendFormat": "Write"
-        }
-      ]
-    },
-    {
-      "datasource": "prometheus",
-      "gridPos": { "x": 0, "y": 22, "w": 12, "h": 6 },
-      "id": 8,
-      "title": "Red Enviada (bytes/s)",
-      "type": "graph",
-      "targets": [
-        {
-          "expr": "rate(worker_network_sent_bytes[5s])",
-          "legendFormat": "Sent"
-        }
-      ]
-    },
-    {
-      "datasource": "prometheus",
-      "gridPos": { "x": 12, "y": 22, "w": 12, "h": 6 },
-      "id": 9,
-      "title": "Red Recibida (bytes/s)",
-      "type": "graph",
-      "targets": [
-        {
-          "expr": "rate(worker_network_recv_bytes[5s])",
-          "legendFormat": "Recv"
-        }
+        { "expr": "rate(celery_worker_io_write_bytes[5s])", "legendFormat": "Write" }
       ]
     }
   ],
   "schemaVersion": 36,
   "style": "dark",
-  "title": "Worker Profiling Dashboard",
-  "uid": "worker-profiling-fixed",
-  "version": 3
+  "title": "Celery Worker Dashboard",
+  "uid": "celery-worker-dashboard",
+  "version": 5
 }

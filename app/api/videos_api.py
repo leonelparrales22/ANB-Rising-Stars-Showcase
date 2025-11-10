@@ -12,12 +12,12 @@ import logging
 
 from ..core.security import verify_token
 
-
+from shared.storage import storage_manager
+from shared.config.settings import settings
 from shared.db.config import get_db
 from shared.db.models.user import User
 from shared.db.models.video import Video, VideoStatus
 from shared.db.models.vote import Vote
-from shared.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -65,19 +65,13 @@ def upload_video(
             status_code=400, detail={"message": "El archivo excede el límite de 100MB"}
         )
 
-    # Crear directorio de uploads si no existe
-    upload_dir = settings.uploads_dir
-    os.makedirs(upload_dir, exist_ok=True)
-
     # Generar nombre único para el archivo
     video_id = str(uuid.uuid4())
     filename = f"{video_id}.mp4"
-    file_path = os.path.join(upload_dir, filename)
 
     # Guardar archivo
     try:
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(video_file.file, buffer)
+        file_url = storage_manager.upload_video(video_file.file, video_id, filename)
     except Exception as e:
         raise HTTPException(
             status_code=500, detail={"message": f"Error al guardar archivo: {str(e)}"}
@@ -90,7 +84,7 @@ def upload_video(
         status=VideoStatus.UPLOADED.value,
         id_user=user.id,
         uploaded_at=datetime.datetime.now(datetime.timezone.utc),
-        file_original_url=file_path,
+        file_original_url=file_url,
         file_size_bytes=file_size,
     )
 
@@ -101,8 +95,10 @@ def upload_video(
     except Exception as e:
         db.rollback()
         # Limpiar archivo si falla la BD
-        if os.path.exists(file_path):
-            os.remove(file_path)
+        try:
+            storage_manager.delete_video(file_url)
+        except:
+            pass
         raise HTTPException(
             status_code=500,
             detail={"message": f"Error al guardar en base de datos: {str(e)}"},
@@ -297,11 +293,15 @@ def delete_video(
     original_url = video.file_original_url
     processed_url = video.file_processed_url
 
-    if os.path.exists(original_url):
-        os.remove(original_url)
-
-    if processed_url is not None and os.path.exists(processed_url):
-        os.remove(processed_url)
+    # Eliminar archivos usando storage manager
+    try:
+        if original_url:
+            storage_manager.delete_video(original_url)
+        if processed_url:
+            storage_manager.delete_video(processed_url)
+    except Exception as e:
+        logger.warning(f"Error eliminando archivos: {str(e)}")
+        # Continuar con la eliminación de BD aunque falle la eliminación de archivos
 
     try:
         db.delete(video)

@@ -6,6 +6,5 @@ services:
     command: celery -A worker.celery_app worker --loglevel=info --queues=uploaded-videos
     env_file:
       - ./.env
-    volumes:
-      - /mnt/data/uploads:/app/uploads:delegated
-      - /mnt/data/assets:/app/assets:delegated
+    ports:
+      - "9001:9001"

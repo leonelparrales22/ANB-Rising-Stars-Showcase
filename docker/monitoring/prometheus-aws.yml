@@ -1,0 +1,10 @@
+global:
+  scrape_interval: 2s
+
+scrape_configs:
+  - job_name: "worker"
+    static_configs:
+      - targets:
+          - "worker1:9001"
+          - "worker2:9001"
+          - "worker3:9001"

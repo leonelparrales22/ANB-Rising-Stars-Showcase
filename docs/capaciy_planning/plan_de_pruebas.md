@@ -48,7 +48,7 @@ Medir el número máximo de usuarios concurrentes que pueden subir videos cumpli
 
 Evaluar la capacidad del worker midiendo el throughput (videos/minuto) según:
 
-- Tamaño de video: **50 MB y 100 MB**
+- Tamaño de video: **1 MB, 5 MB, 20 MB,  50 MB y 100 MB**
 - Paralelismo: **1, 2 y 4 hilos de ejecución**
 
 ---
@@ -80,7 +80,7 @@ Evaluar la capacidad del worker midiendo el throughput (videos/minuto) según:
 | Iteración | Tipo        | Descripción                                    | Duración  |
 | --------- | ----------- | ---------------------------------------------- | --------- |
 | 1         | Smoke Test  | Validar funcionamiento básico                  | 1 minuto  |
-| 2         | Ramp Up     | Escalamiento progresivo de usuarios (100→300)  | 8 minutos |
+| 2         | Ramp Up     | Escalamiento progresivo de usuarios (100→200)  | 8 minutos |
 | 3         | Sostenida   | Carga estable al 80% del umbral máximo         | 5 minutos |
 | 4         | Worker Load | Procesamiento de 50MB y 100MB a 1, 2 y 4 hilos | Variable  |
 
