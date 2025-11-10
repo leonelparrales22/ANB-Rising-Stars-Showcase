@@ -102,8 +102,9 @@ services:
       - ../uploads:/app/uploads
       - ../assets:/app/assets
       - ../shared:/app/shared
-    command: celery -A worker.celery_app worker --loglevel=info --queues=uploaded-videos
-
+    command: celery -A worker.celery_app worker --loglevel=info --queues=uploaded-videos --concurrency=1
+    ports:
+      - "9001:9001"
   nginx:
     image: nginx:alpine
     restart: always

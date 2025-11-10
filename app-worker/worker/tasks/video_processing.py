@@ -13,21 +13,17 @@ from shared.db.models.user import User
 from shared.db.models.vote import Vote
 
 # Importar métricas
-from shared.metrics.metrics import (
-    start_metrics_server,
-    videos_processed,
-    videos_failed,
-    video_processing_time,
-)
-import threading
+from shared.metrics.process_exporter import start_exporter
+
+from celery.signals import worker_process_init
 
 logger = structlog.get_logger()
 
-# Iniciar servidor de métricas Prometheus en segundo plano
-threading.Thread(
-    target=start_metrics_server, kwargs={"port": 9001}, daemon=True
-).start()
-
+@worker_process_init.connect
+def init_worker_exporter(**kwargs):
+    logger.info("Starting Prometheus exporter inside Celery worker process")
+    # Ejecuta el exporter de métricas del proceso real (CPU, RAM, I/O)
+    start_exporter(port=9001)
 
 @celery_app.task(
     bind=True,
@@ -144,10 +140,6 @@ def process_video_task(self, video_id: str):
         video.processed_at = datetime.utcnow()
         db.commit()
 
-        # Métricas: video procesado exitosamente
-        videos_processed.inc()
-        video_processing_time.observe((datetime.utcnow() - start_time).total_seconds())
-
         return {
             "status": "completed",
             "video_id": video_id,
@@ -196,10 +188,6 @@ def process_video_task(self, video_id: str):
             logger.error(
                 "Error updating database with failure status", error=str(db_error)
             )
-
-        # Métricas: video fallido
-        videos_failed.inc()
-        video_processing_time.observe((datetime.utcnow() - start_time).total_seconds())
 
         try:
             raise self.retry(exc=exc)
