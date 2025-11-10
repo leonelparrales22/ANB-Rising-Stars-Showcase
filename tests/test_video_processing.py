@@ -83,22 +83,35 @@ class TestVideoProcessingSimple:
     @patch('os.path.exists')
     @patch('os.makedirs')
     def test_add_anb_intro_outro_success(self, mock_makedirs, mock_exists, mock_subprocess):
-        """Prueba exitosa de agregar cortinillas ANB."""
+        """Prueba exitosa de agregar cortinillas ANB usando concat de ffmpeg."""
         # Configurar mocks
         mock_exists.return_value = True  # Los archivos de intro/outro existen
         mock_result = MagicMock()
         mock_result.returncode = 0
         mock_subprocess.return_value = mock_result
-        
+
         from worker.tasks.video_processing import add_anb_intro_outro
-        
+
         result = add_anb_intro_outro("/input/video.mp4", "/output/video.mp4")
-        
+
+        # Verificar que la función retornó True
         assert result is True
+
+        # Verificar que se llamó subprocess.run una vez
         mock_subprocess.assert_called_once()
+
+        # Obtener los argumentos del llamado a subprocess
         call_args = mock_subprocess.call_args[0][0]
+
+        # Verificar que el comando ffmpeg usa concat correctamente
         assert 'ffmpeg' in call_args
-        assert '-filter_complex' in call_args
+        assert '-f' in call_args
+        assert 'concat' in call_args
+        assert '-safe' in call_args
+        assert '0' in call_args  # -safe 0
+        # Opcional: verificar que se incluyen los paths de input/output
+        assert "/input/video.mp4" in call_args or "/output/video.mp4" in call_args
+
 
     @patch('subprocess.run')
     @patch('os.makedirs')
