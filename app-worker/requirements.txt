@@ -1,4 +1,4 @@
-celery[amqp]==5.5.3
+celery[amqp, sqs]==5.5.3
 redis==6.4.0
 structlog==25.4.0
 sqlalchemy==2.0.44
