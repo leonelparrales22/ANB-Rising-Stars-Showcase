@@ -1,4 +1,5 @@
 from celery import Celery
+from kombu import Queue
 import os
 
 
@@ -12,24 +13,46 @@ def create_celery_app(app_name: str, include_modules: list) -> Celery:
 
     if use_sqs:
         # AWS - SQS
-        region = os.getenv("AWS_REGION", "us-east-1")
-        queue_name = os.getenv("AWS_SQS_QUEUE_NAME", "uploaded-videos")
+        region = os.getenv("AWS_REGION", "")
+        queue_name = os.getenv("AWS_SQS_QUEUE_NAME", "")
         queue_url = os.getenv("AWS_SQS_QUEUE_URL")
+        aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID", "")
+        aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY", "")
+        aws_session_token = os.getenv("AWS_SESSION_TOKEN", "")
+        visibility_timeout = int(os.getenv("SQS_VISIBILITY_TIMEOUT", 3600))
+        wait_time_seconds = int(os.getenv("SQS_WAIT_TIME_SECONDS", 20))
+        max_messages = int(os.getenv("SQS_MAX_MESSAGES", 1))
+        polling_interval = int(os.getenv("SQS_POLLING_INTERVAL", 1))
 
-        celery_app = Celery(app_name, broker="sqs://")
-        broker_transport_options = {"region": region, "visibility_timeout": 3600}
+        # celery_app = Celery(app_name, broker=f"sqs://@sqs.{region}.amazonaws.com")
+        celery_app = Celery(app_name,
+                            broker="sqs://",
+                            include=["worker.tasks.video_processing"])
 
-        if queue_url:
-            broker_transport_options["predefined_queues"] = {
-                queue_name: {"url": queue_url}
+        celery_app.conf.task_queues = (Queue(queue_name),)
+
+        broker_transport_options = {
+            "region": region,
+            # "is_secure": True,
+            'aws_access_key_id': aws_access_key_id,
+            'aws_secret_access_key': aws_secret_access_key,
+            'aws_session_token': aws_session_token,
+            "visibility_timeout": visibility_timeout,
+            "wait_time_seconds": wait_time_seconds,
+            "max_messages": max_messages,
+            "polling_interval": polling_interval,
+            "predefined_queues": {
+                queue_name: {
+                    "url": queue_url
+                }
             }
-
-        celery_app.conf.update(
-            broker_transport_options=broker_transport_options,
-            task_default_queue=queue_name,
-        )
+        }
+        celery_app.conf.broker_transport_options = broker_transport_options
 
         print(f"[Celery] 🔶 Usando AWS SQS ({region})")
+        print(celery_app.conf)
+
+        TASK_QUEUE_NAME = queue_name
 
     else:
         # Local - RabbitMQ
@@ -40,18 +63,35 @@ def create_celery_app(app_name: str, include_modules: list) -> Celery:
         celery_app.conf.task_default_queue = "uploaded-videos"
 
         print(f"[Celery] 🧩 Usando RabbitMQ local → {broker_url}")
+        print(celery_app.conf)
+
+        TASK_QUEUE_NAME = "uploaded-videos"
 
     celery_app.conf.update(
+        task_default_queue=TASK_QUEUE_NAME,
+        task_queues=(Queue(TASK_QUEUE_NAME),),
+
         task_serializer="json",
-        accept_content=["json"],
         result_serializer="json",
+        accept_content=["json"],
         timezone="UTC",
         enable_utc=True,
+
+        # Seguridad recomendada
+        worker_hijack_root_logger=False,
         task_track_started=True,
         task_acks_late=True,
+
+        # Reduce sobrecarga en SQS
         worker_prefetch_multiplier=1,
-        worker_max_tasks_per_child=1000,
-        worker_hijack_root_logger=False,
+        worker_max_tasks_per_child=500,
+
+        task_routes={
+            "tasks.video_processing.process_video_task": {
+                "queue": TASK_QUEUE_NAME
+            }
+        },
+
         include=include_modules,
     )
 

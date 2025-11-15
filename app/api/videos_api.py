@@ -126,7 +126,7 @@ def upload_video(
         task = celery_app.send_task(
             "worker.tasks.video_processing.process_video_task",
             args=[video_new.id],
-            queue="uploaded-videos",
+            queue=settings.queue_name,
         )
 
         # Actualizar video con task_id

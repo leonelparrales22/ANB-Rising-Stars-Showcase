@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     aws_session_token: str = os.getenv("AWS_SESSION_TOKEN", "")
     aws_region: str = os.getenv("AWS_REGION", "us-east-1")
     s3_bucket: str = os.getenv("S3_BUCKET", "anb-videos")
+    queue_name: str = os.getenv("AWS_SQS_QUEUE_NAME", "uploaded-videos")
 
     class Config:
         env_file = ".env"

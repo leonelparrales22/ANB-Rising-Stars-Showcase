@@ -19,4 +19,4 @@ COPY shared /app/shared
 COPY app /app/app
 
 # Comando por defecto para ejecutar worker
-CMD ["celery", "-A", "worker.celery_app", "worker", "--loglevel=info", "--queues=uploaded-videos"]
+CMD ["celery", "-A", "worker.celery_app", "worker", "--loglevel=info", "--pool=solo"]
