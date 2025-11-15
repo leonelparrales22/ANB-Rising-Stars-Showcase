@@ -50,7 +50,6 @@ def create_celery_app(app_name: str, include_modules: list) -> Celery:
         celery_app.conf.broker_transport_options = broker_transport_options
 
         print(f"[Celery] 🔶 Usando AWS SQS ({region})")
-        print(celery_app.conf)
 
         TASK_QUEUE_NAME = queue_name
 
@@ -63,7 +62,6 @@ def create_celery_app(app_name: str, include_modules: list) -> Celery:
         celery_app.conf.task_default_queue = "uploaded-videos"
 
         print(f"[Celery] 🧩 Usando RabbitMQ local → {broker_url}")
-        print(celery_app.conf)
 
         TASK_QUEUE_NAME = "uploaded-videos"
 
