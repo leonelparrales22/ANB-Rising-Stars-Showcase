@@ -102,7 +102,7 @@ services:
       - ../uploads:/app/uploads
       - ../assets:/app/assets
       - ../shared:/app/shared
-    command: celery -A worker.celery_app worker --loglevel=info --queues=uploaded-videos --concurrency=1
+    command: celery -A worker.celery_app worker --loglevel=info --pool=solo
     ports:
       - "9001:9001"
   nginx:

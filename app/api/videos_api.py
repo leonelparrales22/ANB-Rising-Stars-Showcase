@@ -12,6 +12,7 @@ import logging
 
 from ..core.security import verify_token
 
+from shared.broker import create_celery_app
 from shared.storage import storage_manager
 from shared.config.settings import settings
 from shared.db.config import get_db
@@ -117,15 +118,15 @@ def upload_video(
     # Enviar mensaje a cola 'uploaded-videos' con Celery
     try:
         # Configuración de Celery
-        celery_app = Celery(
-            "video_processor", broker="amqp://admin:admin@rabbitmq:5672//"
+        celery_app = create_celery_app(
+            "video_processor", ["worker.tasks.video_processing"]
         )
 
         # Enviar tarea a la cola
         task = celery_app.send_task(
             "worker.tasks.video_processing.process_video_task",
             args=[video_new.id],
-            queue="uploaded-videos",
+            queue=settings.queue_name,
         )
 
         # Actualizar video con task_id
