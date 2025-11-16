@@ -3,7 +3,7 @@ services:
     image: misw4204/worker-anbrss:1.0.0
     container_name: worker
     restart: always
-    command: celery -A worker.celery_app worker --loglevel=info --queues=uploaded-videos
+    command: celery -A worker.celery_app worker --loglevel=info --pool=solo
     env_file:
       - ./.env
     ports:

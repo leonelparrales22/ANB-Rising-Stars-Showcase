@@ -215,23 +215,35 @@ La documentación de la `Entrega No. 3` se encuentra en `docs/Entrega3/`:
 - [Diagrama Modelo de Datos](docs/Entrega3/diagrama-modelo-datos.png)
 - [Link Presentación Vídeo](docs/Entrega3/link-video-presentacion-e3.txt)
 
+La documentación de la `Entrega No. 4` se encuentra en `docs/Entrega4/`:
+
+- [Diagrama de Contexto](docs/Entrega4/diagrama-contexto.png)
+- [Diagrama de Contenedores](docs/Entrega4/diagrama-containers.png)
+- [Diagrama de Componentes](docs/Entrega4/diagrama-componentes.png)
+- [Diagrama de Despliegue](docs/Entrega4/diagrama-despliegue.png)
+- [Diagrama Modelo de Datos](docs/Entrega4/diagrama-modelo-datos.png)
+- [Link Presentación Vídeo](docs/Entrega4/link-video-presentacion-e4.txt)
+
 ## Sustentación
 
 - [Entrega 1 - Video Sustentación](https://drive.google.com/file/d/1E2BxHXR1p46LTX_4j90l8fgzrZB_dvYb/view?usp=sharing)
 - [Entrega 2 - Video Sustentación](https://drive.google.com/file/d/1jyYzLLIPqsP13tP_F5D7CVUCnVsHxLog/view?usp=sharing)
 - [Entrega 3 - Video Sustentación](https://drive.google.com/file/d/17o1-KM7doMRGQbl_oAi5ZGCfvuDYhiTz/view?usp=sharing)
+- [Entrega 4 - Video Sustentación](https://drive.google.com/file/d/16JZMyQETrGPFgkvm0t55kiglaQxp-XlX/view?usp=sharing)
 
 ## Plan de Pruebas de Capacidad
 
 - [Plan de Pruebas](docs/capaciy_planning/plan_de_pruebas.md)
 - [Resultados Pruebas de Carga - Entrega 2](docs/capaciy_planning/pruebas_de_carga_entrega_2.md)
 - [Resultados Pruebas de Carga - Entrega 3](docs/capaciy_planning/pruebas_de_carga_entrega_3.md)
+- [Resultados Pruebas de Carga - Entrega 4](docs/capaciy_planning/pruebas_de_carga_entrega_4.md)
 
 ## Releases
 
 - **v1.0.0**: Primera entrega con auth endpoints y Docker setup. [Ver release](https://github.com/leonelparrales22/ANB-Rising-Stars-Showcase/releases/tag/v1.0.0)
 - **v2.0.0**: Segunda entrega con despliegue en AWS y pruebas de carga. [Ver release](https://github.com/leonelparrales22/ANB-Rising-Stars-Showcase/releases/tag/v2.0.0)
 - **v3.0.0**: Tercera entrega con despliegue en AWS y pruebas de carga. [Ver release](https://github.com/leonelparrales22/ANB-Rising-Stars-Showcase/releases/tag/v3.0.0)
+- **v4.0.0**: Tercera entrega con despliegue en AWS y pruebas de carga. [Ver release](https://github.com/leonelparrales22/ANB-Rising-Stars-Showcase/releases/tag/v4.0.0)
 
 ## Arquitectura del Sistema
 
