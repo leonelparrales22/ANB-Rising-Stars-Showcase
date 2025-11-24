@@ -229,8 +229,8 @@ La documentación de la `Entrega No. 5` se encuentra en `docs/Entrega4/`:
 - [Diagrama de Contexto](docs/Entrega5/diagrama-contexto.png)
 - [Diagrama de Contenedores](docs/Entrega5/diagrama-containers.png)
 - [Diagrama de Componentes](docs/Entrega5/diagrama-componentes.png)
-- [Diagrama de Despliegue](docs/Entrega5/diagrama-despliegue-uml.png)
-- [Diagrama de Despliegue](docs/Entrega5/diagrama-despliegue-aws.png)
+- [Diagrama de Despliegue UML](docs/Entrega5/diagrama-modelo-despliegue-uml.png)
+- [Diagrama de Despliegue AWS](docs/Entrega5/diagrama-modelo-despliegue-aws.png)
 - [Diagrama Modelo de Datos](docs/Entrega5/diagrama-modelo-datos.png)
 - [Link Presentación Vídeo](docs/Entrega5/link-video-presentacion-e5.txt)
 
