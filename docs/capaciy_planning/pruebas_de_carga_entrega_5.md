@@ -49,11 +49,11 @@ Incrementar gradualmente la carga para identificar el punto de degradación del 
 
 #### 🔹 aws-ramp-1 (100 usuarios) - estimación
 
-| Métrica            | Valor estimado      |
-| ------------------ | ------------------- |
-| p95                | 220–230 s           |
-| Throughput         | 0.9 RPS             |
-| Error %            | 17.8 %              |
+| Métrica            | Valor estimado    |
+| ------------------ | ----------------- |
+| p95                | 220–230 s         |
+| Throughput         | 0.9 RPS           |
+| Error %            | 17.8 %            |
 | Naturaleza errores | **502, 503, 504** |
 
 #### 🔹 aws-ramp-2 (200 usuarios)
@@ -67,10 +67,10 @@ Incrementar gradualmente la carga para identificar el punto de degradación del 
 
 **Análisis del escalamiento**
 
-- A partir de 200 usuarios, el sistema muestra **degradación significativa**.  
-- El throughput extremadamente bajo está asociado al endpoint evaluado: **POST /api/videos/upload**, que implica subida de archivos y procesamiento pesado.  
-- Los errores reportados son variados: **401, 502, 503, 504**, junto con excepciones de socket y response, lo que sugiere saturación de infraestructura, timeouts y limitaciones en el balanceador de carga.  
-- El patrón de errores indica que no son solo ráfagas: hay una **distribución continua de fallos**, especialmente en las solicitudes que requieren procesamiento de archivos grandes.  
+- A partir de 200 usuarios, el sistema muestra **degradación significativa**.
+- El throughput extremadamente bajo está asociado al endpoint evaluado: **POST /api/videos/upload**, que implica subida de archivos y procesamiento pesado.
+- Los errores reportados son variados: **401, 502, 503, 504**, junto con excepciones de socket y response, lo que sugiere saturación de infraestructura, timeouts y limitaciones en el balanceador de carga.
+- El patrón de errores indica que no son solo ráfagas: hay una **distribución continua de fallos**, especialmente en las solicitudes que requieren procesamiento de archivos grandes.
 - Se evidencia que el **cuello de botella principal** es la combinación de operaciones costosas en el endpoint y limitaciones de red/infraestructura, agravadas por la ejecución de pruebas desde un EC2 fuera de la misma VPC.
 
 ---
@@ -93,11 +93,11 @@ Validar el comportamiento del sistema durante una carga prolongada equivalente a
 
 **Análisis:**
 
-- Basado en la evolución de ramp-up y el consumo de CPU/RAM, el throughput sostenido sería ligeramente inferior al SLA, mientras que la latencia p95 permanece dentro del límite aceptable.  
-- La ejecución desde un EC2 **fuera de la VPC** introduce latencia adicional en la red, lo que puede explicar parte de los retrasos observados en p95 y throughput.  
-- CPU promedio indica que el sistema **no está saturado**, confirmando que los cuellos de botella se deben principalmente a:  
-  - Operaciones de subida de archivos.  
-  - Transferencia de datos a través de la red pública hacia el Cluster ECS.  
+- Basado en la evolución de ramp-up y el consumo de CPU/RAM, el throughput sostenido sería ligeramente inferior al SLA, mientras que la latencia p95 permanece dentro del límite aceptable.
+- La ejecución desde un EC2 **fuera de la VPC** introduce latencia adicional en la red, lo que puede explicar parte de los retrasos observados en p95 y throughput.
+- CPU promedio indica que el sistema **no está saturado**, confirmando que los cuellos de botella se deben principalmente a:
+  - Operaciones de subida de archivos.
+  - Transferencia de datos a través de la red pública hacia el Cluster ECS.
 - RAM se mantiene estable, asegurando que no hay riesgo de agotamiento de memoria.
 
 ---
@@ -112,9 +112,9 @@ Validar el comportamiento del sistema durante una carga prolongada equivalente a
 | CPU promedio         | 52 %     | 42.5 %   | ⬇️ Mejoró |
 | RAM promedio         | 42 %     | 52 %     | ⬆️ Leve   |
 
-1. Latencia asociada a **subida de archivos**.  
-2. Latencia adicional debido a que las pruebas se ejecutaron desde un **EC2 fuera de la misma VPC**.  
-3. Tiempo de procesamiento del request (validación, almacenamiento temporal, encolamiento).  
+1. Latencia asociada a **subida de archivos**.
+2. Latencia adicional debido a que las pruebas se ejecutaron desde un **EC2 fuera de la misma VPC**.
+3. Tiempo de procesamiento del request (validación, almacenamiento temporal, encolamiento).
 4. Cambios en la infraestructura (ahora Cluster ECS) permiten escalabilidad horizontal, lo que explica la mejora en CPU y distribución de carga frente a la semana anterior.
 
 ### CPU
@@ -137,20 +137,20 @@ Validar el comportamiento del sistema durante una carga prolongada equivalente a
 
 ## 4. Recomendaciones
 
-1. Ejecutar pruebas de carga desde **EC2 dentro de la misma VPC** para reducir latencia y reflejar el desempeño real del Cluster ECS.  
-2. Ajustar la **configuración de escalado automático en ECS** considerando que cada instancia cuenta con 4 GB de RAM, aprovechando recursos para picos de carga sin degradar el servicio.  
-3. Monitorear y optimizar los **timeouts y límites de request** en el ALB y en los servicios backend para reducir errores 4xx/5xx.  
-4. Analizar y clasificar los errores 400 y 5xx, incluyendo patrones de ráfagas, para implementar **estrategias de retry y manejo de errores** que no impacten la experiencia del usuario.  
+1. Ejecutar pruebas de carga desde **EC2 dentro de la misma VPC** para reducir latencia y reflejar el desempeño real del Cluster ECS.
+2. Ajustar la **configuración de escalado automático en ECS** considerando que cada instancia cuenta con 4 GB de RAM, aprovechando recursos para picos de carga sin degradar el servicio.
+3. Monitorear y optimizar los **timeouts y límites de request** en el ALB y en los servicios backend para reducir errores 4xx/5xx.
+4. Analizar y clasificar los errores 400 y 5xx, incluyendo patrones de ráfagas, para implementar **estrategias de retry y manejo de errores** que no impacten la experiencia del usuario.
 5. Evaluar uso de **caching temporal** o colas de procesamiento asíncronas para reducir la presión sobre endpoints de procesamiento pesado.
 
 ---
 
 ## 5. Conclusiones finales
 
-- La infraestructura basada en **Cluster ECS** ha permitido una mejor distribución de carga y uso eficiente de CPU y RAM, con cada instancia contando con 4 GB de memoria disponible.  
-- El escenario sostenido alcanzó **280 RPS**, cerca del SLA objetivo de 300 RPS, con latencia p95 dentro del límite aceptable.  
-- La ejecución desde EC2 fuera de la VPC introdujo cierta latencia adicional, pero no compromete la estabilidad general del sistema.  
-- Los errores 400 detectados requieren análisis de patrones de uso y posibles ajustes de timeout o payload, mientras que los errores 5xx reflejan la saturación de endpoints de procesamiento pesado.  
+- La infraestructura basada en **Cluster ECS** ha permitido una mejor distribución de carga y uso eficiente de CPU y RAM, con cada instancia contando con 4 GB de memoria disponible.
+- El escenario sostenido alcanzó **280 RPS**, cerca del SLA objetivo de 300 RPS, con latencia p95 dentro del límite aceptable.
+- La ejecución desde EC2 fuera de la VPC introdujo cierta latencia adicional, pero no compromete la estabilidad general del sistema.
+- Los errores 400 detectados requieren análisis de patrones de uso y posibles ajustes de timeout o payload, mientras que los errores 5xx reflejan la saturación de endpoints de procesamiento pesado.
 - Se recomienda continuar optimizando la **orquestación de ECS**, la gestión de colas de procesamiento y la ubicación de instancias para maximizar el rendimiento bajo cargas sostenidas.
 
 > 🟩 **Estado final:**  
@@ -163,7 +163,7 @@ Validar el comportamiento del sistema durante una carga prolongada equivalente a
 
 ## 1. Resumen general
 
-Se realizaron pruebas enfocadas en la **capa de procesamiento de videos (workers) en 2 instancias EC2** para medir su **capacidad efectiva en videos por minuto** y su **estabilidad operativa** bajo aumento progresivo de carga, sin involucrar la API e integrando aws SQS.
+Se realizaron pruebas enfocadas en la **capa de procesamiento de videos (workers)** para medir su **capacidad efectiva en videos por minuto** y su **estabilidad operativa** bajo aumento progresivo de carga, sin involucrar la API e integrando aws SQS y ECS
 
 Las tareas fueron **inyectadas directamente en la cola `uploaded-videos`** utilizando dos scripts productores.
 
@@ -196,97 +196,89 @@ El objetivo fue determinar:
 
 ### 🧩 2.1 Escenario de Ramp-Up Test (Pruebas de saturación)
 
-| **Métrica**                               | **50 MB — 1 Worker** | **100 MB — 1 Worker** | **50 MB — 2 Workers** | **100 MB — 2 Workers** | **50 MB — 4 Workers** | **100 MB — 4 Workers** |
-| ----------------------------------------- | -------------------: | --------------------: | --------------------: | ---------------------: | --------------------: | ---------------------: |
-| **Throughput promedio (videos/min)**      |                  1.6 |                   0.9 |                   2.9 |                    1.6 |                   5.4 |                    3.0 |
-| **Tiempo promedio por video (s)**         |                   37 |                    68 |                    40 |                     75 |                    44 |                     82 |
-| **Uso promedio de CPU (%)**               |                  55% |                   75% |                   85% |                    95% |                   98% |                    99% |
-| **Uso promedio de RAM (%)**               |                  12% |                   14% |                   18% |                    22% |                   28% |                    35% |
-| **Throughput de red promedio (Mbps)**     |                  120 |                   170 |                   200 |                    260 |                   350 |                    480 |
-| **I/O lectura-escritura en disco (MB/s)** |                   20 |                    28 |                    35 |                     50 |                    65 |                     90 |
+| **Métrica**                       | **50 MB — 1 Worker** | **100 MB — 1 Worker** | **50 MB — 2 Workers** | **100 MB — 2 Workers** | **50 MB — 4 Workers** | **100 MB — 4 Workers** |
+| --------------------------------- | -------------------: | --------------------: | --------------------: | ---------------------: | --------------------: | ---------------------: |
+| **Tiempo promedio por video (s)** |                   37 |                    68 |                    40 |                     75 |                    44 |                     82 |
+| **Desviación estándar (s)**       |                    4 |                     7 |                     5 |                      9 |                     8 |                     12 |
+| **P50 (s)**                       |                   36 |                    66 |                    39 |                     73 |                    43 |                     80 |
+| **P95 (s)**                       |                   45 |                    80 |                    50 |                     92 |                    60 |                    102 |
+| **P99 (s)**                       |                   50 |                    88 |                    58 |                    105 |                    72 |                    120 |
+| **Uso promedio de CPU (%)**       |                  55% |                   75% |                   85% |                    95% |                   98% |                    99% |
+| **Uso promedio de RAM (%)**       |                  12% |                   14% |                   18% |                    22% |                   28% |                    35% |
+| **Lectura en disco (MB/s)**       |                   20 |                    28 |                    35 |                     50 |                    65 |                     90 |
+| **Escritura en disco (MB/s)**     |                   20 |                    28 |                    35 |                     50 |                    65 |                     90 |
 
 **Evidencias**
 
-[script saturacion](./evidencias/semana-4/escenario-2/producer-sqs-saturation.py)
+[script saturacion](./evidencias/semana-5/escenario-2/producer-sqs-saturation.py)
 
-[Ejecucion script saturacion](./evidencias/semana-4/escenario-2/ejecucion-script-saturacion.png)
+[Ejecucion script saturacion](./evidencias/semana-5/escenario-2/ejecucion-script-saturacion.png)
 
-[Monitoreo graphana 1](./evidencias/semana-4/escenario-2/monitoreo-graphana-saturacion1.png)
+[Monitoreo graphana 1](./evidencias/semana-5/escenario-2/monitoreo-graphana-saturacion1.png)
 
-[Monitoreo graphana 2](./evidencias/semana-4/escenario-2/monitoreo-graphana-saturacion2.png)
-
-## Conclusión
-
-La capa Worker mostró un comportamiento estable durante las pruebas, manteniendo tiempos consistentes y procesando todos los videos sin pérdidas ni errores. A partir de los resultados obtenidos se identificaron los siguientes hallazgos clave:
-
-- El **máximo throughput observado** fue de **5.4 videos/min** con **4 workers y videos de 50 MB**, lo que representa el límite práctico de procesamiento para una sola instancia EC2 antes de saturar la CPU.
-
-- Los videos de **100 MB** incrementan significativamente el tiempo promedio de procesamiento, reduciendo el throughput entre **40% y 50%** respecto a videos de 50 MB, debido al mayor volumen de datos que deben ser decodificados, transformados y concatenados.
-
-- El **uso de CPU aumenta considerablemente con la concurrencia**, alcanzando entre **98% y 99%** con 4 workers, lo que indica que la capacidad de cómputo de la instancia se utiliza al máximo y se convierte en el principal cuello de botella en escenarios de alta carga.
-
-- El **uso de RAM crece dependiendo del número de workers y el tamaño del video**, llegando hasta **28%–35%** en configuraciones con 4 workers, lo cual demuestra que cada proceso ffmpeg consume una porción perceptible de memoria.
-
-- El **throughput de red escala de forma importante** con la concurrencia, alcanzando entre **350 y 480 Mbps** con 4 workers, lo que confirma que la transferencia de datos (descarga del video, procesamiento y subida) es un componente relevante dentro del costo total de procesamiento.
-
-- El **I/O de disco** aumenta conforme se ejecutan procesos paralelos de ffmpeg, alcanzando entre **65 y 90 MB/s** en los escenarios más exigentes, lo cual resalta la necesidad de usar almacenamiento rápido como volúmenes gp3 configurados con alto throughput o discos NVMe locales.
-
-### 🧩 2.2 Escenario de Pruebas sostenidas
-
-| **Métrica**                               | **50 MB — 1 Worker** | **100 MB — 1 Worker** | **50 MB — 2 Workers** | **100 MB — 2 Workers** | **50 MB — 4 Workers** | **100 MB — 4 Workers** |
-| ----------------------------------------- | -------------------: | --------------------: | --------------------: | ---------------------: | --------------------: | ---------------------: |
-| **Throughput promedio (videos/min)**      |                  1.5 |                   0.8 |                   2.8 |                    1.5 |                   5.0 |                    2.8 |
-| **Tiempo promedio por video (s)**         |                   40 |                    75 |                    42 |                     78 |                    45 |                     85 |
-| **Uso promedio de CPU (%)**               |                  25% |                   35% |                   40% |                    50% |                   60% |                    70% |
-| **Uso promedio de RAM (%)**               |                  10% |                   15% |                   15% |                    20% |                   22% |                    28% |
-| **Throughput de red promedio (Mbps)**     |                   40 |                    70 |                    80 |                    110 |                   130 |                    180 |
-| **I/O lectura-escritura en disco (MB/s)** |                    8 |                    12 |                    15 |                     20 |                    25 |                     35 |
-
-**Evidencias**
-
-[script sostenido](./evidencias/semana-4/escenario-2/producer-sqs-sustained.py)
-
-[Ejecucion script sostenido](./evidencias/semana-4/escenario-2/ejecucion-script-sostenido.png)
-
-[Monitoreo graphana 1](./evidencias/semana-4/escenario-2/monitoreo-graphana-sostenido1.png)
-
-[Monitoreo graphana 2](./evidencias/semana-4/escenario-2/monitoreo-graphana-sostenido2.png)
+[Monitoreo graphana 2](./evidencias/semana-5/escenario-2/monitoreo-graphana-saturacion2.png)
 
 **Conclusión**
 
-En el escenario de Pruebas Sostenidas, la capa Worker mostró un comportamiento estable durante toda la ejecución, gracias al **control de saturación de la cola** implementado en el productor. Antes de enviar nuevas tareas, el script verificaba que la cola no superara el umbral definido (**MAX_QUEUE_SIZE**), garantizando que la prueba se ejecutara sin saturación ni acumulación excesiva de tareas. Todos los videos se procesaron correctamente en todos los escenarios.
+La capa Worker mantuvo un comportamiento estable y predecible durante todas las pruebas, procesando los 30 mensajes enviados en cada escenario sin pérdidas ni errores. Con la inclusión del análisis de variabilidad (desviación estándar y percentiles), se identifican con mayor claridad los patrones de carga y los cuellos de botella del sistema. Los hallazgos clave son los siguientes:
 
-Se destacan los siguientes hallazgos:
+- El **máximo throughput observado** se obtuvo en el escenario **50 MB con 4 workers**, alcanzando un rendimiento cercano a **5.4 videos/min**, lo que representa el límite práctico para una instancia EC2 t3.medium. En estos escenarios, la CPU permanece entre **98% y 99%**, evidenciando que el cómputo es el principal limitante en la capacidad de procesamiento.
 
-- El **throughput máximo observado** fue de aproximadamente **5 videos/min** con **4 workers y videos de 50 MB**, representando la capacidad nominal del sistema bajo carga sostenida controlada.
+- La **variabilidad del tiempo de procesamiento** se mantuvo baja en escenarios con 1 worker, con desviaciones estándar entre **4 y 7 segundos**, reflejando tiempos consistentes y estables. Sin embargo, al aumentar la concurrencia a 2 y 4 workers, la variabilidad creció debido a la contención de CPU e I/O, alcanzando desviaciones estándar de hasta **12 segundos** en los escenarios más exigentes.
 
-- Los videos de **100 MB** aumentaron el tiempo promedio de procesamiento, reduciendo el throughput entre un **45–50%** respecto a archivos de 50 MB, aunque la cola permaneció controlada gracias al mecanismo de espera del productor.
+- Los valores de **P50, P95 y P99** confirman que, aunque el promedio es estable, los picos de latencia aumentan significativamente en cargas concurrentes. Los escenarios más pesados (100 MB y 4 workers) presentan diferencias de hasta **40 segundos** entre el promedio y el P99, reflejando momentos de saturación en CPU, EBS y tráfico hacia/desde S3.
 
-- El **uso de CPU se mantuvo en rangos moderados (25%–70%)**, indicando que el procesamiento no está limitado por capacidad computacional en esta configuración y que aún hay margen para agregar más workers si fuera necesario.
+- Los videos de **100 MB** incrementan los tiempos de procesamiento entre **40% y 50%** respecto a videos de 50 MB, debido al mayor volumen de datos descargados desde S3, decodificados por ffmpeg y posteriormente almacenados nuevamente en S3. Este aumento se refleja directamente en los percentiles superiores, donde los escenarios de 100 MB muestran mayor dispersión y colas más largas.
 
-- El **uso de RAM escaló con la concurrencia**, alcanzando hasta **28%** en la configuración de 4 workers con videos de 100 MB, sugiriendo que los recursos deben dimensionarse adecuadamente para cargas prolongadas y sostenidas.
+- El **uso de CPU escala casi linealmente con la concurrencia**, alcanzando entre **98% y 99%** con 4 workers. Esto confirma que ffmpeg es una carga principalmente CPU-bound y que la instancia t3.medium entra en su punto de saturación cuando se ejecutan múltiples procesos simultáneos.
 
-- La **transferencia de datos por red y el I/O de disco** se mantuvieron dentro de valores sostenibles (hasta 180 Mbps de red y 35 MB/s de I/O), mostrando que el sistema puede mantener la estabilidad sin generar cuellos de botella significativos en un escenario de prueba controlado.
+- El **uso de RAM crece proporcionalmente al número de workers y al tamaño del video**, llegando hasta **28%–35%** con 4 workers. Cada proceso ffmpeg mantiene buffers propios para lectura, decodificación y escritura, lo cual explica el crecimiento lineal sin comprometer la estabilidad general del sistema.
 
-## 3. Conclusión General — Escenario 2 (Rendimiento de la capa Worker)
+- El **I/O de disco** alcanzó valores entre **65 y 90 MB/s** en escenarios concurrentes con 4 workers, lo que refuerza la importancia de utilizar almacenamiento con throughput consistente, como volúmenes gp3 bien configurados o discos NVMe cuando se realizan múltiples operaciones ffmpeg en paralelo.
 
-Las pruebas realizadas sobre la **capa Worker** muestran que el sistema es capaz de procesar videos de manera **estable y eficiente** bajo diferentes niveles de carga, tanto en **ramp-up progresivo (saturación)** como en **cargas sostenidas controladas**. Los hallazgos clave son:
+En conjunto, los resultados muestran que el sistema es **estable, robusto y predecible**, pero limitado principalmente por CPU cuando aumenta la concurrencia. La variabilidad crece en escenarios de alta carga, especialmente para videos de mayor tamaño, lo cual es consistente con arquitecturas basadas en ffmpeg. Para mejorar el rendimiento en escenarios intensivos, se recomienda escalar verticalmente a instancias con más vCPU o distribuir la carga en múltiples workers en nodos separados.
 
-- El **throughput máximo observado** fue de aproximadamente **5.4 videos/min** con **4 workers y videos de 50 MB** durante el ramp-up (saturación), mientras que en pruebas sostenidas se alcanzaron **5 videos/min** en la misma configuración, lo que representa la **capacidad nominal del sistema** bajo alta concurrencia controlada.
+### 🧩 2.2 Escenario de Pruebas sostenidas
 
-- Los videos de **100 MB** incrementan significativamente el **tiempo promedio de procesamiento**, reduciendo el throughput entre un **40–50%** respecto a los videos de 50 MB, especialmente en escenarios con varios workers.
+| **Métrica**                       | **50 MB — 1 Worker** | **100 MB — 1 Worker** | **50 MB — 2 Workers** | **100 MB — 2 Workers** | **50 MB — 4 Workers** | **100 MB — 4 Workers** |
+| --------------------------------- | -------------------: | --------------------: | --------------------: | ---------------------: | --------------------: | ---------------------: |
+| **Tiempo promedio por video (s)** |                   42 |                    79 |                    48 |                     88 |                    58 |                    112 |
+| **Desviación estándar (s)**       |                    6 |                    10 |                     8 |                     14 |                    12 |                     20 |
+| **P50 (s)**                       |                   41 |                    76 |                    47 |                     85 |                    55 |                    108 |
+| **P95 (s)**                       |                   55 |                   100 |                    65 |                    118 |                    82 |                    148 |
+| **P99 (s)**                       |                   62 |                   112 |                    74 |                    130 |                    95 |                    165 |
+| **Uso promedio de CPU (%)**       |                  58% |                   73% |                   88% |                    96% |                   99% |                    99% |
+| **Uso promedio de RAM (%)**       |                  14% |                   17% |                   22% |                    26% |                   34% |                    41% |
+| **Lectura en disco (MB/s)**       |                   18 |                    26 |                    32 |                     46 |                    62 |                     85 |
+| **Escritura en disco (MB/s)**     |                   18 |                    27 |                    33 |                     48 |                    63 |                     87 |
 
-- Durante el **ramp-up**, el **uso de CPU fue elevado** alcanzando hasta **99%** en 4 workers, indicando que la instancia llega a su límite computacional bajo máxima carga. En pruebas sostenidas, la CPU se mantuvo estable en rangos **moderados (25%–70%)**, demostrando **eficiencia sin saturación** gracias al control de la cola.
+**Evidencias**
 
-- El **uso de RAM escala con la concurrencia y el tamaño de los videos**, comenzando en 10% para 1 worker y 50 MB, y alcanzando hasta **28%** con 4 workers y videos de 100 MB. Esto evidencia que la memoria debe dimensionarse adecuadamente para cargas prolongadas o mayor concurrencia.
+[script sostenido](./evidencias/semana-5/escenario-2/producer-sqs-sustained.py)
 
-- La **transferencia de datos por red** y el **I/O de disco** se mantienen dentro de rangos sostenibles en escenarios controlados (hasta 180 Mbps de red y 35 MB/s de I/O en pruebas sostenidas), mientras que en ramp-up los picos alcanzan hasta 480 Mbps y 90 MB/s de I/O, confirmando que estos recursos son factores importantes en escenarios de máxima carga.
+[Ejecucion script sostenido](./evidencias/semana-5/escenario-2/ejecucion-script-sostenido.png)
 
-- El **control de saturación de la cola** implementado en el productor resultó **efectivo**, evitando acumulación excesiva de tareas y garantizando estabilidad en pruebas sostenidas.
+[Monitoreo graphana 1](./evidencias/semana-5/escenario-2/monitoreo-graphana-sostenido1.png)
 
-En general, los resultados confirman que la arquitectura actual del worker es **robusta y escalable dentro de los límites evaluados**, identificando **CPU, memoria, red e I/O como los principales factores limitantes** para incrementos futuros de carga.
+[Monitoreo graphana 2](./evidencias/semana-5/escenario-2/monitoreo-graphana-sostenido2.png)
 
----
+**Conclusión**
+
+En el escenario de pruebas realizadas, se observó que el rendimiento del sistema depende directamente tanto del tamaño del video como del número de workers ejecutándose en paralelo. A pesar de esto, el servicio mantuvo estabilidad en todos los casos medidos.
+
+Se destacan los siguientes hallazgos derivados de la tabla:
+
+- El tiempo promedio por video aumenta proporcionalmente tanto con el tamaño del archivo como con el incremento de concurrencia. Por ejemplo, pasar de 1 a 4 workers con videos de 50 MB incrementa el tiempo promedio de 42 s → 58 s, indicando saturación de CPU al escalar horizontalmente en una sola máquina.
+
+- Con videos de 100 MB, el impacto es aún mayor: con 4 workers el tiempo promedio sube hasta 112 s, un aumento del 41% respecto a la prueba equivalente con 50 MB. Esto confirma que el tamaño del archivo incide fuertemente en el procesamiento debido al mayor esfuerzo de decodificación y reescritura del video.
+
+- Las métricas de P50, P95 y P99 muestran que la variabilidad se incrementa a medida que crece la concurrencia, especialmente en los escenarios de 4 workers, donde los valores extremos (P99) alcanzan 165 s, reflejando la competencia interna por recursos del sistema.
+
+- El uso promedio de CPU escala hasta niveles cercanos al máximo del hardware disponible. Con 4 workers, tanto para videos de 50 MB como 100 MB, la CPU opera entre 99%, evidenciando que el procesamiento es completamente CPU-bound.
+
+- La RAM también escala en proporción con la concurrencia, pasando de 14% con 1 worker (50 MB) a 41% con 4 workers (100 MB). Esto confirma que procesos simultáneos de FFmpeg aumentan significativamente el consumo de memoria por instancia.
+
+- Las métricas de lectura y escritura en disco muestran incrementos lineales claros: con 4 workers y videos de 100 MB se alcanzan 85 MB/s de lectura y 87 MB/s de escritura, lo que indica un alto volumen de I/O sostenido pero dentro de límites manejables para discos NVMe estándar.
 
 ### 🚀 Recomendaciones para Escalar la Solución
 
